@@ -29,14 +29,6 @@ class TestBase(unittest.TestCase):
         migrationsdir = os.path.join(dbdir, 'migrations', 'default')
         logg.info('using migrations directory {}'.format(migrationsdir))
 
-#        db_dir = tempfile.mkdtemp()
-#        self.db_path = os.path.join(db_dir, 'test.sqlite')
-#        config = {
-#            'DATABASE_ENGINE': 'sqlite',
-#            'DATABASE_DRIVER': 'pysqlite',
-#            'DATABASE_NAME': self.db_path,
-#                }
-
         config = {
             'DATABASE_ENGINE': 'sqlite',
             'DATABASE_DRIVER': 'pysqlite',
@@ -57,24 +49,8 @@ class TestBase(unittest.TestCase):
         alembic.command.downgrade(ac, 'base')
         alembic.command.upgrade(ac, 'head')
 
-
-
         self.session = SessionBase.create_session()
-#
-#        f = open(os.path.join(script_dir, '..', 'sql', 'sqlite', '1.sql'), 'r')
-#        sql = f.read()
-#        f.close()
-#
-#        conn = SessionBase.engine.connect()
-#        conn.execute(sql)
-#
-#        f = open(os.path.join(script_dir, '..', 'sql', 'sqlite', '2.sql'), 'r')
-#        sql = f.read()
-#        f.close()
-#
-#        conn = SessionBase.engine.connect()
-#        conn.execute(sql)
-#
+
         self.chain_spec = ChainSpec('evm', 'foo', 42, 'bar')
 
 
