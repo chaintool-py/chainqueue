@@ -180,7 +180,7 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
     return txs
 
 
-def get_status_tx(chain_spec, status, not_status=None, before=None, exact=False, limit=0, session=None):
+def get_status_tx_cache(chain_spec, status, not_status=None, before=None, exact=False, limit=0, session=None, decoder=None):
     """Retrieve transaction with a specific queue status.
 
     :param status: Status to match transactions with
@@ -196,7 +196,6 @@ def get_status_tx(chain_spec, status, not_status=None, before=None, exact=False,
     session = SessionBase.bind_session(session)
     q = session.query(Otx)
     q = q.join(TxCache)
-   #     before = datetime.datetime.utcnow()
     if before != None:
         q = q.filter(TxCache.date_updated<before)
     if exact:
@@ -216,7 +215,7 @@ def get_status_tx(chain_spec, status, not_status=None, before=None, exact=False,
     return txs
 
 
-def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, recipient=None, before=None, limit=0, session=None):
+def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, recipient=None, before=None, limit=0, session=None, decoder=None):
     """Returns the next pending transaction, specifically the transaction with the lowest nonce, for every recipient that has pending transactions.
 
     Will omit addresses that have the LockEnum.SEND bit in Lock set.
