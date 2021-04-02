@@ -1,18 +1,18 @@
 # standard imports
 import datetime
 
-# third-party imports
+# external imports
 from sqlalchemy import Column, String, Integer, DateTime, Enum, ForeignKey, Boolean, NUMERIC
 from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
-#from sqlalchemy.orm import relationship, backref
-#from sqlalchemy.ext.declarative import declarative_base
+from hexathon import (
+        strip_0x,
+        )
 
 # local imports
 from .base import SessionBase
 from .otx import Otx
-from cic_eth.db.util import num_serialize
-from cic_eth.error import NotLocalTxError
-from cic_eth.db.error import TxStateChangeError
+from chainqueue.error import NotLocalTxError
+from chainqueue.db.error import TxStateChangeError
 
 
 class TxCache(SessionBase):
@@ -127,7 +127,7 @@ class TxCache(SessionBase):
     def __init__(self, tx_hash, sender, recipient, source_token_address, destination_token_address, from_value, to_value, block_number=None, tx_index=None, session=None):
         session = SessionBase.bind_session(session)
         q = session.query(Otx)
-        q = q.filter(Otx.tx_hash==tx_hash)
+        q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
         tx = q.first()
         if tx == None:
             SessionBase.release_session(session)

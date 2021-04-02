@@ -23,6 +23,7 @@ def upgrade():
             sa.Column('otx_id', sa.Integer, sa.ForeignKey('otx.id'), nullable=True),
             sa.Column('date_created', sa.DateTime, nullable=False),
             sa.Column('date_updated', sa.DateTime, nullable=False),
+            sa.Column('date_checked', sa.DateTime, nullable=False),
             sa.Column('source_token_address', sa.String(42), nullable=False),
             sa.Column('destination_token_address', sa.String(42), nullable=False),
             sa.Column('sender', sa.String(42), nullable=False),

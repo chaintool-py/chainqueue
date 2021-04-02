@@ -562,10 +562,3 @@ class Otx(SessionBase):
         self.tx_hash = strip_0x(tx_hash)
         self.signed_tx = strip_0x(signed_tx)
         self.status = StatusEnum.PENDING
-        #signed_tx_bytes = bytes.fromhex(strip_0x(signed_tx))
-        #signed_tx_bytes = bytes.fromhex(strip_0x(tx_hash))
-
-       # sender_address = address_hex_from_signed_tx(signed_tx_bytes)
-       # logg.debug('decoded tx {}'.format(sender_address))
-
- 
