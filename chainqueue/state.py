@@ -22,7 +22,7 @@ from chainqueue.error import (
 logg = logging.getLogger().getChild(__name__)
 
 
-def set_sent(tx_hash, fail=False):
+def set_sent(chain_spec, tx_hash, fail=False, session=None):
     """Used to set the status after a send attempt
 
     :param tx_hash: Transaction hash of record to modify
@@ -33,11 +33,11 @@ def set_sent(tx_hash, fail=False):
     :returns: True if tx is known, False otherwise
     :rtype: boolean
     """
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
         logg.warning('not local tx, skipping {}'.format(tx_hash))
-        session.close()
+        SessionBase.release_session(session)
         return False
 
     try:
@@ -47,21 +47,21 @@ def set_sent(tx_hash, fail=False):
             o.sent(session=session)
     except TxStateChangeError as e:
         logg.exception('set sent fail: {}'.format(e))
-        session.close()
+        SessionBase.release_session(session)
         raise(e)
     except Exception as e:
         logg.exception('set sent UNEXPECED fail: {}'.format(e))
-        session.close()
+        SessionBase.release_session(session)
         raise(e)
 
 
     session.commit()
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
-def set_final(tx_hash, block=None, fail=False):
+def set_final(chain_spec, tx_hash, block=None, fail=False, session=None):
     """Used to set the status of an incoming transaction result. 
 
     :param tx_hash: Transaction hash of record to modify
@@ -72,11 +72,11 @@ def set_final(tx_hash, block=None, fail=False):
     :type fail: boolean
     :raises NotLocalTxError: If transaction not found in queue.
     """
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     session.flush()
@@ -89,11 +89,11 @@ def set_final(tx_hash, block=None, fail=False):
         session.commit()
     except TxStateChangeError as e:
         logg.exception('set final fail: {}'.format(e))
-        session.close()
+        SessionBase.release_session(session)
         raise(e)
     except Exception as e:
         logg.exception('set final UNEXPECTED fail: {}'.format(e))
-        session.close()
+        SessionBase.release_session(session)
         raise(e)
 
     q = session.query(TxCache)
@@ -101,12 +101,12 @@ def set_final(tx_hash, block=None, fail=False):
     q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
     o  = q.first()
 
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
     
 
-def set_cancel(tx_hash, manual=False):
+def set_cancel(chain_spec, tx_hash, manual=False, session=None):
     """Used to set the status when a transaction is cancelled.
 
     Will set the state to CANCELLED or OVERRIDDEN
@@ -118,10 +118,10 @@ def set_cancel(tx_hash, manual=False):
     :raises NotLocalTxError: If transaction not found in queue.
     """
 
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     session.flush()
@@ -136,12 +136,12 @@ def set_cancel(tx_hash, manual=False):
         logg.exception('set cancel fail: {}'.format(e))
     except Exception as e:
         logg.exception('set cancel UNEXPECTED fail: {}'.format(e))
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
-def set_rejected(tx_hash):
+def set_rejected(chain_spec, tx_hash, session=None):
     """Used to set the status when the node rejects sending a transaction to network
 
     Will set the state to REJECTED
@@ -151,22 +151,22 @@ def set_rejected(tx_hash):
     :raises NotLocalTxError: If transaction not found in queue.
     """
 
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     session.flush()
 
     o.reject(session=session)
     session.commit()
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
-def set_fubar(tx_hash):
+def set_fubar(chain_spec, tx_hash, session=None):
     """Used to set the status when an unexpected error occurs.
 
     Will set the state to FUBAR
@@ -176,22 +176,22 @@ def set_fubar(tx_hash):
     :raises NotLocalTxError: If transaction not found in queue.
     """
 
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     session.flush()
 
     o.fubar(session=session)
     session.commit()
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
-def set_manual(tx_hash):
+def set_manual(chain_spec, tx_hash, session=None):
     """Used to set the status when queue is manually changed
 
     Will set the state to MANUAL
@@ -201,32 +201,32 @@ def set_manual(tx_hash):
     :raises NotLocalTxError: If transaction not found in queue.
     """
 
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     session.flush()
 
     o.manual(session=session)
     session.commit()
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
-def set_ready(tx_hash):
+def set_ready(chain_spec, tx_hash, session=None):
     """Used to mark a transaction as ready to be sent to network
 
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
     :raises NotLocalTxError: If transaction not found in queue.
     """
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
     session.flush()
 
@@ -236,29 +236,29 @@ def set_ready(tx_hash):
         o.retry(session=session)
 
     session.commit()
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
-def set_reserved(tx_hash):
-    session = SessionBase.create_session()
+def set_reserved(chain_spec, tx_hash, session=None):
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     session.flush()
 
     o.reserve(session=session)
     session.commit()
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
 
-def set_waitforgas(tx_hash):
+def set_waitforgas(chain_spec, tx_hash, session=None):
     """Used to set the status when a transaction must be deferred due to gas refill
 
     Will set the state to WAITFORGAS
@@ -267,27 +267,26 @@ def set_waitforgas(tx_hash):
     :type tx_hash: str, 0x-hex
     :raises NotLocalTxError: If transaction not found in queue.
     """
-
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     session.flush()
 
     o.waitforgas(session=session)
     session.commit()
-    session.close()
+    SessionBase.release_session(session)
 
     return tx_hash
 
 
-def get_state_log(tx_hash):
+def get_state_log(chain_spec, tx_hash, session=None):
 
     logs = []
     
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
 
     q = session.query(OtxStateLog)
     q = q.join(Otx)
@@ -296,13 +295,13 @@ def get_state_log(tx_hash):
     for l in q.all():
         logs.append((l.date, l.status,))
 
-    session.close()
+    SessionBase.release_session(session)
 
     return logs
 
 
 
-def cancel_obsoletes_by_cache(tx_hash):
+def cancel_obsoletes_by_cache(chain_spec, tx_hash):
     session = SessionBase.create_session()
     q = session.query(
             Otx.nonce.label('nonce'),

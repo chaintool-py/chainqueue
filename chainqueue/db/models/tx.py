@@ -91,20 +91,19 @@ class TxCache(SessionBase):
         
         q = session.query(TxCache)
         q = q.join(Otx)
-        q = q.filter(Otx.tx_hash==tx_hash_original)
+        q = q.filter(Otx.tx_hash==strip_0x(tx_hash_original))
         txc = q.first()
 
         if txc == None:
             SessionBase.release_session(session)
             raise NotLocalTxError('original {}'.format(tx_hash_original))
-        if txc.block_number != None:
+        if txc.tx_index != None:
             SessionBase.release_session(session)
             raise TxStateChangeError('cannot clone tx cache of confirmed tx {}'.format(tx_hash_original))
 
         session.flush()
-        q = session.query(Otx)
-        q = q.filter(Otx.tx_hash==tx_hash_new)
-        otx = q.first()
+
+        otx = Otx.load(tx_hash_new, session=session)
 
         if otx == None:
             SessionBase.release_session(session)

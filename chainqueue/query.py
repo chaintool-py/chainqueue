@@ -28,7 +28,7 @@ from chainqueue.error import (
 logg = logging.getLogger().getChild(__name__)
 
 
-def get_tx_cache(chain_spec, tx_hash):
+def get_tx_cache(chain_spec, tx_hash, session=None):
     """Returns an aggregate dictionary of outgoing transaction data and metadata
 
     :param tx_hash: Transaction hash of record to modify
@@ -37,11 +37,11 @@ def get_tx_cache(chain_spec, tx_hash):
     :returns: Transaction data
     :rtype: dict
     """
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
 
     otx = Otx.load(tx_hash, session=session)
     if otx == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError(tx_hash)
 
     session.flush()
@@ -50,7 +50,7 @@ def get_tx_cache(chain_spec, tx_hash):
     q = q.filter(TxCache.otx_id==otx.id)
     txc = q.first()
 
-    session.close()
+    SessionBase.release_session(session)
 
     # TODO: DRY, get_tx_cache / get_tx
     tx = {
@@ -75,7 +75,7 @@ def get_tx_cache(chain_spec, tx_hash):
     return tx
 
 
-def get_tx(chain_spec, tx_hash):
+def get_tx(chain_spec, tx_hash, session=None):
     """Retrieve a transaction queue record by transaction hash
 
     :param tx_hash: Transaction hash of record to modify
@@ -84,10 +84,10 @@ def get_tx(chain_spec, tx_hash):
     :returns: nonce, address and signed_tx (raw signed transaction)
     :rtype: dict
     """
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     otx = Otx.load(tx_hash, session=session)
     if otx == None:
-        session.close()
+        SessionBase.release_session(session)
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
 
     o = {
@@ -97,11 +97,11 @@ def get_tx(chain_spec, tx_hash):
         'status': otx.status,
             }
     logg.debug('get tx {}'.format(o))
-    session.close()
+    SessionBase.release_session(session)
     return o
 
 
-def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None):
+def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
     """Retrieve all transactions for address with specified nonce
 
     :param nonce: Nonce
@@ -113,7 +113,7 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None):
     """
     chain_id = chain_spec.chain_id()
 
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     q = session.query(Otx)
     q = q.join(TxCache)
     q = q.filter(TxCache.sender==sender)
@@ -128,7 +128,7 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None):
                 raise IntegrityError('Cache sender {} does not match sender in tx {} using decoder {}'.format(sender, r.tx_hash, str(decoder)))
         txs[r.tx_hash] = r.signed_tx
 
-    session.close()
+    SessionBase.release_session(session)
 
     return txs
 
@@ -297,7 +297,7 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
     return txs
 
 
-def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, counterpart=None):
+def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, counterpart=None, session=None):
     """Returns all local queue transactions for a given Ethereum address
 
     :param address: Ethereum address
@@ -317,7 +317,7 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
 
     txs = {}
 
-    session = SessionBase.create_session()
+    session = SessionBase.bind_session(session)
     q = session.query(Otx)
     q = q.join(TxCache)
     if as_sender and as_recipient:
@@ -334,6 +334,7 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
             logg.debug('tx {} already recorded'.format(r.tx_hash))
             continue
         txs[r.tx_hash] = r.signed_tx
-    session.close()
+
+    SessionBase.release_session(session)
 
     return txs

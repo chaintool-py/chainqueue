@@ -24,7 +24,7 @@ class TestOtxState(TestOtxBase):
         set_sent(self.tx_hash)
         set_final(self.tx_hash, block=1042)
 
-        state_log = get_state_log(self.tx_hash)
+        state_log = get_state_log(self.chain_spec, self.tx_hash)
         self.assertEqual(state_log[0][1], StatusEnum.READYSEND)
         self.assertEqual(state_log[1][1], StatusEnum.RESERVED)
         self.assertEqual(state_log[2][1], StatusEnum.SENT)
