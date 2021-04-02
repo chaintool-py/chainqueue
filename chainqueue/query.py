@@ -123,7 +123,7 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None):
     for r in q.all():
         tx_signed_bytes = bytes.fromhex(r.signed_tx)
         if decoder != None:
-            tx = unpack(tx_signed_bytes, chain_id)
+            tx = decoder(tx_signed_bytes, chain_spec)
             if sender != None and tx['from'] != sender:
                 raise IntegrityError('Cache sender {} does not match sender in tx {} using decoder {}'.format(sender, r.tx_hash, str(decoder)))
         txs[r.tx_hash] = r.signed_tx
@@ -168,13 +168,11 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
     for r in q.all():
         tx_signed_bytes = bytes.fromhex(r.signed_tx)
         if decoder != None:
-            tx = unpack(tx_signed_bytes, chain_id)
+            tx = decoder(tx_signed_bytes, chain_spec)
             if sender != None and tx['from'] != sender:
                 raise IntegrityError('Cache sender {} does not match sender in tx {} using decoder {}'.format(sender, r.tx_hash, str(decoder)))
             gas += tx['gas'] * tx['gasPrice']
 
-        #tx = unpack(tx_signed_bytes, chain_id)
-        #if sender == None or tx['from'] == sender:
         txs[r.tx_hash] = r.signed_tx
 
     SessionBase.release_session(session)
