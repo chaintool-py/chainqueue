@@ -11,8 +11,10 @@ from hexathon import (
 # local imports
 from .base import SessionBase
 from .otx import Otx
-from chainqueue.error import NotLocalTxError
-from chainqueue.db.error import TxStateChangeError
+from chainqueue.error import (
+        NotLocalTxError,
+        TxStateChangeError,
+        )
 
 
 class TxCache(SessionBase):

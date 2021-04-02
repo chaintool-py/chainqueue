@@ -11,29 +11,16 @@ from hexathon import (
 
 # local imports
 from .base import SessionBase
+from .state import OtxStateLog
 from chainqueue.db.enum import (
         StatusEnum,
         StatusBits,
         status_str,
         is_error_status,
         )
-from chainqueue.db.error import TxStateChangeError
+from chainqueue.error import TxStateChangeError
 
 logg = logging.getLogger().getChild(__name__)
-
-
-class OtxStateLog(SessionBase):
-
-    __tablename__ = 'otx_state_log'
-
-    date = Column(DateTime, default=datetime.datetime.utcnow)
-    status = Column(Integer)
-    otx_id = Column(Integer, ForeignKey('otx.id'))
-
-
-    def __init__(self, otx):
-        self.otx_id = otx.id
-        self.status = otx.status
 
 
 class Otx(SessionBase):
@@ -308,7 +295,7 @@ class Otx(SessionBase):
             raise TxStateChangeError('SENT cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.IN_NETWORK, session)
-        self.__reset_status(StatusBits.DEFERRED | StatusBits.QUEUED | StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR, session)
+        self.__reset_status(StatusBits.RESERVED | StatusBits.DEFERRED | StatusBits.QUEUED | StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR, session)
 
         if self.tracing:
             self.__state_log(session=session)
@@ -336,7 +323,7 @@ class Otx(SessionBase):
             raise TxStateChangeError('SENDFAIL cannot be set on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.LOCAL_ERROR | StatusBits.DEFERRED, session)
-        self.__reset_status(StatusBits.QUEUED | StatusBits.GAS_ISSUES, session)
+        self.__reset_status(StatusBits.RESERVED | StatusBits.QUEUED | StatusBits.GAS_ISSUES, session)
 
         if self.tracing:
             self.__state_log(session=session)
@@ -344,7 +331,7 @@ class Otx(SessionBase):
         SessionBase.release_session(session)
 
 
-    def dequeue(self, session=None):
+    def reserve(self, session=None):
         """Marks that a process to execute send attempt is underway
 
         Only manipulates object, does not transaction or commit to backend.
@@ -364,6 +351,7 @@ class Otx(SessionBase):
             raise TxStateChangeError('QUEUED cannot be unset on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
 
         self.__reset_status(StatusBits.QUEUED, session)
+        self.__set_status(StatusBits.RESERVED, session)
 
         if self.tracing:
             self.__state_log(session=session)
@@ -505,7 +493,7 @@ class Otx(SessionBase):
         session = SessionBase.bind_session(session)
         
         q = session.query(Otx)
-        q = q.filter(Otx.tx_hash==tx_hash)
+        q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
 
         SessionBase.release_session(session)
 
@@ -537,12 +525,12 @@ class Otx(SessionBase):
 
     # TODO: it is not safe to return otx here unless session has been passed in
     @staticmethod
-    def add(nonce, address, tx_hash, signed_tx, session=None):
+    def add(nonce, tx_hash, signed_tx, session=None):
         external_session = session != None
 
         session = SessionBase.bind_session(session)
 
-        otx = Otx(nonce, address, tx_hash, signed_tx)
+        otx = Otx(nonce, tx_hash, signed_tx)
         session.add(otx)
         session.flush()
         if otx.tracing:

@@ -8,6 +8,7 @@ class StatusBits(enum.IntEnum):
 
     """
     QUEUED = 0x01 # transaction should be sent to network
+    RESERVED = 0x02 # transaction is currently being handled by a thread
     IN_NETWORK = 0x08 # transaction is in network
    
     DEFERRED = 0x10 # an attempt to send the transaction to network has failed
@@ -65,22 +66,6 @@ class StatusEnum(enum.IntEnum):
     SUCCESS = StatusBits.IN_NETWORK | StatusBits.FINAL 
 
 
-@enum.unique
-class LockEnum(enum.IntEnum):
-    """
-    STICKY: When set, reset is not possible
-    CREATE: Disable creation of accounts
-    SEND: Disable sending to network
-    QUEUE: Disable queueing new or modified transactions
-    """
-    STICKY=1
-    CREATE=2
-    SEND=4
-    QUEUE=8
-    QUERY=16
-    ALL=int(0xfffffffffffffffe)
-
-
 def status_str(v, bits_only=False):
     """Render a human-readable string describing the status
 
@@ -116,6 +101,7 @@ def status_str(v, bits_only=False):
     if not bits_only:
         s += '*'
     return s
+
 
 
 def all_errors():
