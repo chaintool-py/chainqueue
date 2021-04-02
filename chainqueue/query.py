@@ -240,8 +240,6 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
             func.min(Otx.nonce).label('nonce'),
             )
     q_outer = q_outer.join(TxCache)
-    q_outer = q_outer.join(Lock, isouter=True)
-    q_outer = q_outer.filter(or_(Lock.flags==None, Lock.flags.op('&')(LockEnum.SEND.value)==0))
 
     if not is_alive(status):
         SessionBase.release_session(session)
@@ -339,4 +337,3 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
     session.close()
 
     return txs
-

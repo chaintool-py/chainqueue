@@ -13,7 +13,7 @@ from chainqueue.error import TxStateChangeError
 logg = logging.getLogger().getChild(__name__)
 
 
-def create(nonce, holder_address, tx_hash, signed_tx, chain_spec, obsolete_predecessors=True, session=None):
+def create(chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_predecessors=True, session=None):
     """Create a new transaction queue record.
 
     :param nonce: Transaction nonce

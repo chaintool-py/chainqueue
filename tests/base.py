@@ -73,7 +73,7 @@ class TestOtxBase(TestBase):
         self.nonce = 42
         self.alice = add_0x(os.urandom(20).hex())
 
-        tx_hash = create(self.nonce, self.alice, self.tx_hash, self.tx, self.chain_spec, session=self.session)
+        tx_hash = create(self.chain_spec, self.nonce, self.alice, self.tx_hash, self.tx, session=self.session)
         self.assertEqual(tx_hash, self.tx_hash)
 
 

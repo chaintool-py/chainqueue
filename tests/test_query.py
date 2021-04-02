@@ -41,11 +41,11 @@ class TestTxQuery(TestTxBase):
         tx_hash = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         create(
+                self.chain_spec,
                 42,
                 self.alice,
                 tx_hash,
                 signed_tx,
-                self.chain_spec,
                 session=self.session,
                 )
         txc = TxCache(
@@ -66,11 +66,11 @@ class TestTxQuery(TestTxBase):
         tx_hash = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         create(
+                self.chain_spec,
                 41,
                 self.alice,
                 tx_hash,
                 signed_tx,
-                self.chain_spec,
                 session=self.session,
                 )
         txc = TxCache(
@@ -98,11 +98,11 @@ class TestTxQuery(TestTxBase):
         tx_hash = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         create(
+                self.chain_spec,
                 43,
                 self.alice,
                 tx_hash,
                 signed_tx,
-                self.chain_spec,
                 session=self.session,
                 )
         txc = TxCache(
@@ -127,11 +127,11 @@ class TestTxQuery(TestTxBase):
         tx_hash = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         create(
+                self.chain_spec,
                 42,
                 self.bob,
                 tx_hash,
                 signed_tx,
-                self.chain_spec,
                 session=self.session,
                 )
         txc = TxCache(
