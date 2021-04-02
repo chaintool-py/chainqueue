@@ -140,6 +140,10 @@ class Otx(SessionBase):
         if is_error_status(self.status):
             SessionBase.release_session(session)
             raise TxStateChangeError('FUBAR cannot be set on an entry with an error state already set ({})'.format(status_str(self.status)))
+        if not self.status & StatusBits.RESERVED:
+            SessionBase.release_session(session)
+            raise TxStateChangeError('FUBAR on tx that has not been RESEREVED ({})'.format(status_str(self.status)))
+
 
         self.__set_status(StatusBits.UNKNOWN_ERROR | StatusBits.FINAL, session)
        
@@ -168,6 +172,11 @@ class Otx(SessionBase):
         if is_error_status(self.status):
             SessionBase.release_session(session)
             raise TxStateChangeError('REJECTED cannot be set on an entry with an error state already set ({})'.format(status_str(self.status)))
+        if not self.status & StatusBits.RESERVED:
+            SessionBase.release_session(session)
+            raise TxStateChangeError('REJECTED on tx that has not been RESEREVED ({})'.format(status_str(self.status)))
+
+
 
         self.__set_status(StatusBits.NODE_ERROR | StatusBits.FINAL, session)
             
@@ -294,6 +303,10 @@ class Otx(SessionBase):
             SessionBase.release_session(session)
             raise TxStateChangeError('SENT cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
 
+        if not self.status & StatusBits.RESERVED:
+            SessionBase.release_session(session)
+            raise TxStateChangeError('SENT on tx that has not been RESEREVED ({})'.format(status_str(self.status)))
+
         self.__set_status(StatusBits.IN_NETWORK, session)
         self.__reset_status(StatusBits.RESERVED | StatusBits.DEFERRED | StatusBits.QUEUED | StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR, session)
 
@@ -321,6 +334,9 @@ class Otx(SessionBase):
         if self.status & StatusBits.IN_NETWORK:
             SessionBase.release_session(session)
             raise TxStateChangeError('SENDFAIL cannot be set on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
+        if not self.status & StatusBits.RESERVED:
+            SessionBase.release_session(session)
+            raise TxStateChangeError('SENDFAIL on tx that has not been RESEREVED ({})'.format(status_str(self.status)))
 
         self.__set_status(StatusBits.LOCAL_ERROR | StatusBits.DEFERRED, session)
         self.__reset_status(StatusBits.RESERVED | StatusBits.QUEUED | StatusBits.GAS_ISSUES, session)
@@ -338,17 +354,20 @@ class Otx(SessionBase):
 
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
-        if self.__status_not_set(StatusBits.QUEUED):
+        if self.__status_already_set(StatusBits.RESERVED):
             return
 
         session = SessionBase.bind_session(session)
 
+        if self.status & StatusBits.QUEUED == 0:
+            SessionBase.release_session(session)
+            raise TxStateChangeError('RESERVED cannot be set on an entry without QUEUED state set ({})'.format(status_str(self.status)))
         if self.status & StatusBits.FINAL:
             SessionBase.release_session(session)
-            raise TxStateChangeError('QUEUED cannot be unset on an entry with FINAL state set ({})'.format(status_str(self.status)))
+            raise TxStateChangeError('RESERVED cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
         if self.status & StatusBits.IN_NETWORK:
             SessionBase.release_session(session)
-            raise TxStateChangeError('QUEUED cannot be unset on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
+            raise TxStateChangeError('RESERVED cannot be set on an entry with IN_NETWORK state set ({})'.format(status_str(self.status)))
 
         self.__reset_status(StatusBits.QUEUED, session)
         self.__set_status(StatusBits.RESERVED, session)

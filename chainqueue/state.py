@@ -60,7 +60,7 @@ def set_sent(tx_hash, fail=False):
     return tx_hash
 
 
-def set_final(tx_hash, block=None, fail=False, cancel_obsoletes=True):
+def set_final(tx_hash, block=None, fail=False):
     """Used to set the status of an incoming transaction result. 
 
     :param tx_hash: Transaction hash of record to modify
@@ -113,7 +113,7 @@ def set_cancel(tx_hash, manual=False):
     """
 
     session = SessionBase.create_session()
-    o = session.query(Otx).filter(Otx.tx_hash==tx_hash).first()
+    o = Otx.load(tx_hash, session=session)
     if o == None:
         session.close()
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
@@ -146,7 +146,7 @@ def set_rejected(tx_hash):
     """
 
     session = SessionBase.create_session()
-    o = session.query(Otx).filter(Otx.tx_hash==tx_hash).first()
+    o = Otx.load(tx_hash, session=session)
     if o == None:
         session.close()
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
@@ -171,7 +171,7 @@ def set_fubar(tx_hash):
     """
 
     session = SessionBase.create_session()
-    o = session.query(Otx).filter(Otx.tx_hash==tx_hash).first()
+    o = Otx.load(tx_hash, session=session)
     if o == None:
         session.close()
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
