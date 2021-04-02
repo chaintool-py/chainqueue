@@ -20,6 +20,7 @@ from chainqueue.tx import create
 
 script_dir = os.path.realpath(os.path.dirname(__file__))
 
+logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger().getChild(__name__)
 
 
@@ -44,7 +45,7 @@ class TestBase(unittest.TestCase):
         SessionBase.poolable = False
         SessionBase.transactional = False
         SessionBase.procedural = False
-        SessionBase.connect(dsn, debug=False)
+        SessionBase.connect(dsn, debug=True)
 
         ac = alembic.config.Config(os.path.join(migrationsdir, 'alembic.ini'))
         ac.set_main_option('sqlalchemy.url', dsn)

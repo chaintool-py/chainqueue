@@ -101,9 +101,6 @@ def set_final(tx_hash, block=None, fail=False):
     q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
     o  = q.first()
 
-    if o != None:
-
-
     session.close()
 
     return tx_hash

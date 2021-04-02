@@ -14,3 +14,10 @@ class TxStateChangeError(ChainQueueException):
     """Raised when an invalid state change of a queued transaction occurs
     """
     pass
+
+
+class CacheIntegrityError(ChainQueueException):
+    """Raised when cached data does not match raw transaction data
+    """
+    pass
+
