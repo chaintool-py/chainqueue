@@ -519,23 +519,7 @@ class Otx(SessionBase):
         return q.first()
 
 
-    @staticmethod
-    def account(account_address):
-        """Retrieves all transaction hashes for which the given Ethereum address is sender or recipient.
-
-        :param account_address: Ethereum address to use in query.
-        :type account_address: str, 0x-hex
-        :returns: Outgoing transactions
-        :rtype: tuple, where first element is transaction hash
-        """
-        session = Otx.create_session()
-        q = session.query(Otx.tx_hash)
-        q = q.join(TxCache)
-        q = q.filter(or_(TxCache.sender==account_address, TxCache.recipient==account_address))
-        txs = q.all()
-        session.close()
-        return list(txs)
-
+    
 
     def __state_log(self, session):
         l = OtxStateLog(self)

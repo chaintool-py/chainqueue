@@ -30,7 +30,7 @@ def upgrade():
             sa.Column('recipient', sa.String(42), nullable=False),
             sa.Column('from_value', sa.NUMERIC(), nullable=False),
             sa.Column('to_value', sa.NUMERIC(), nullable=True),
-            sa.Column('block_number', sa.BIGINT(), nullable=True),
+#            sa.Column('block_number', sa.BIGINT(), nullable=True),
             sa.Column('tx_index', sa.Integer, nullable=True),
             )
 

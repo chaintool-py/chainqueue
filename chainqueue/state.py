@@ -11,6 +11,7 @@ from chainqueue.db.models.base import SessionBase
 from chainqueue.db.enum import (
         StatusEnum,
         StatusBits,
+        is_nascent,
         )
 from chainqueue.db.models.otx import OtxStateLog
 from chainqueue.error import (
@@ -94,6 +95,14 @@ def set_final(tx_hash, block=None, fail=False):
         logg.exception('set final UNEXPECTED fail: {}'.format(e))
         session.close()
         raise(e)
+
+    q = session.query(TxCache)
+    q = q.join(Otx)
+    q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
+    o  = q.first()
+
+    if o != None:
+
 
     session.close()
 
@@ -224,7 +233,7 @@ def set_ready(tx_hash):
         raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
     session.flush()
 
-    if o.status & StatusBits.GAS_ISSUES or o.status == StatusEnum.PENDING:
+    if o.status & StatusBits.GAS_ISSUES or is_nascent(o.status):
         o.readysend(session=session)
     else:
         o.retry(session=session)
@@ -285,7 +294,7 @@ def get_state_log(tx_hash):
 
     q = session.query(OtxStateLog)
     q = q.join(Otx)
-    q = q.filter(Otx.tx_hash==tx_hash)
+    q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
     q = q.order_by(OtxStateLog.date.asc())
     for l in q.all():
         logs.append((l.date, l.status,))
@@ -332,4 +341,3 @@ def cancel_obsoletes_by_cache(tx_hash):
     session.close()
 
     return tx_hash
-

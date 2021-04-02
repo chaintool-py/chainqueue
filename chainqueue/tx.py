@@ -39,6 +39,7 @@ def create(nonce, holder_address, tx_hash, signed_tx, chain_spec, obsolete_prede
             )
     session.flush()
 
+    # TODO: No magic, please, should be separate step
     if obsolete_predecessors:
         q = session.query(Otx)
         q = q.join(TxCache)
@@ -59,7 +60,6 @@ def create(nonce, holder_address, tx_hash, signed_tx, chain_spec, obsolete_prede
                 logg.exception('obsolete UNEXPECTED fail: {}'.format(e))
                 session.close()
                 raise(e)
-
 
     session.commit()
     SessionBase.release_session(session)

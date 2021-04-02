@@ -51,6 +51,7 @@ class StatusEnum(enum.IntEnum):
     SENDFAIL = StatusBits.DEFERRED | StatusBits.LOCAL_ERROR
     RETRY = StatusBits.QUEUED | StatusBits.DEFERRED 
     READYSEND = StatusBits.QUEUED
+    RESERVED = StatusBits.RESERVED
 
     OBSOLETED = StatusBits.OBSOLETE | StatusBits.IN_NETWORK
 
@@ -122,6 +123,15 @@ def is_error_status(v):
     :rtype: bool
     """
     return bool(v & all_errors())
+
+
+__ignore_manual_value = ~StatusBits.MANUAL
+def ignore_manual(v):
+    return v & __ignore_manual_value
+
+
+def is_nascent(v):
+    return ignore_manual(v) == StatusEnum.PENDING
 
 
 def dead():

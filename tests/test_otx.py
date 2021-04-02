@@ -4,16 +4,10 @@ import logging
 import unittest
 
 # external imports
-from hexathon import (
-        strip_0x,
-        add_0x,
-        )
 from chainlib.chain import ChainSpec
 
 # local imports
 from chainqueue.db.models.otx import Otx
-from chainqueue.db.models.tx import TxCache
-from chainqueue.tx import create
 from chainqueue.state import *
 from chainqueue.db.enum import (
         is_alive,
@@ -21,24 +15,13 @@ from chainqueue.db.enum import (
         )
 
 # test imports
-from tests.base import TestBase
+from tests.base import TestOtxBase
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
 
 
-class TestOtx(TestBase):
-
-    def setUp(self):
-        super(TestOtx, self).setUp()
-        self.tx_hash = add_0x(os.urandom(32).hex())
-        self.tx = add_0x(os.urandom(128).hex())
-        self.nonce = 42
-        self.alice = add_0x(os.urandom(20).hex())
-
-        tx_hash = create(self.nonce, self.alice, self.tx_hash, self.tx, self.chain_spec, session=self.session)
-        self.assertEqual(tx_hash, self.tx_hash)
-
+class TestOtx(TestOtxBase):
 
     def test_ideal_state_sequence(self):
         set_ready(self.tx_hash)
@@ -131,6 +114,7 @@ class TestOtx(TestBase):
         otx = Otx.load(self.tx_hash, session=self.session)
         self.assertFalse(is_alive(otx.status))
         self.assertTrue(is_error_status(otx.status))
+        self.assertEqual(otx.status & StatusBits.NETWORK_ERROR, StatusBits.NETWORK_ERROR)
 
 
     def test_final_protected(self):
@@ -154,9 +138,30 @@ class TestOtx(TestBase):
         set_cancel(self.tx_hash)
         self.session.refresh(otx)
         self.assertEqual(otx.status & StatusBits.OBSOLETE, 0)
+        
+        set_cancel(self.tx_hash, manual=True)
+        self.session.refresh(otx)
+        self.assertEqual(otx.status & StatusBits.OBSOLETE, 0)
 
         with self.assertRaises(TxStateChangeError):
             set_reserved(self.tx_hash)
+
+        with self.assertRaises(TxStateChangeError):
+            set_waitforgas(self.tx_hash)
+
+        with self.assertRaises(TxStateChangeError):
+            set_manual(self.tx_hash)
+
+
+    def test_manual_persist(self):
+        set_manual(self.tx_hash)
+        set_ready(self.tx_hash)
+        set_reserved(self.tx_hash)
+        set_sent(self.tx_hash)
+        set_final(self.tx_hash, block=1042)
+
+        otx = Otx.load(self.tx_hash, session=self.session)
+        self.assertEqual(otx.status & StatusBits.MANUAL, StatusBits.MANUAL)
 
 
 if __name__ == '__main__':

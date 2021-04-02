@@ -59,7 +59,7 @@ class TxCache(SessionBase):
     recipient = Column(String(42))
     from_value = Column(NUMERIC())
     to_value = Column(NUMERIC())
-    block_number = Column(Integer())
+    #block_number = Column(Integer())
     tx_index = Column(Integer())
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
     date_updated = Column(DateTime, default=datetime.datetime.utcnow)
@@ -124,6 +124,65 @@ class TxCache(SessionBase):
         session.commit()
 
         SessionBase.release_session(session)
+
+
+    # TODO: possible dead code
+    @staticmethod
+    def account(account_address, session=None):
+        """Retrieves all transaction hashes for which the given Ethereum address is sender or recipient.
+
+        :param account_address: Ethereum address to use in query.
+        :type account_address: str, 0x-hex
+        :returns: Outgoing transactions
+        :rtype: tuple, where first element is transaction hash
+        """
+        session = SessionBase.bind_session(session)
+
+        q = session.query(Otx.tx_hash)
+        q = q.join(TxCache)
+        q = q.filter(or_(TxCache.sender==account_address, TxCache.recipient==account_address))
+        txs = q.all()
+
+        SessionBase.release_session(session)
+        return list(txs)
+
+
+    @staticmethod
+    def set_final(tx_hash, block_number, tx_index, session=None):
+        session = SessionBase.bind_session(session)
+
+        q = session.query(TxCache)
+        q = q.join(Otx)
+        q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
+        q = q.filter(Otx.block==block_number)
+        o = q.first()
+
+        if o == None:
+            raise NotLocalTxError(tx_hash, block_number)
+                
+        o.tx_index = tx_index
+        session.add(o)
+        session.flush()
+
+        SessionBase.release_session(session)
+
+
+    @staticmethod
+    def load(tx_hash, session=None):
+        """Retrieves the outgoing transaction record by transaction hash.
+
+        :param tx_hash: Transaction hash
+        :type tx_hash: str, 0x-hex
+        """
+        session = SessionBase.bind_session(session)
+        
+        q = session.query(TxCache)
+        q = q.join(Otx)
+        q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
+
+        SessionBase.release_session(session)
+
+        return q.first()
 
 
     def __init__(self, tx_hash, sender, recipient, source_token_address, destination_token_address, from_value, to_value, block_number=None, tx_index=None, session=None):
