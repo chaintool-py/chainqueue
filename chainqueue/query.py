@@ -111,8 +111,6 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
     :returns: Transactions
     :rtype: dict, with transaction hash as key, signed raw transaction as value
     """
-    chain_id = chain_spec.chain_id()
-
     session = SessionBase.bind_session(session)
     q = session.query(Otx)
     q = q.join(TxCache)
@@ -277,7 +275,7 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
             continue
 
         tx_signed_bytes = bytes.fromhex(o.signed_tx[2:])
-        tx = unpack(tx_signed_bytes, chain_id)
+        tx = decoder(tx_signed_bytes, chain_spec)
         txs[o.tx_hash] = o.signed_tx
         
         q = session.query(TxCache)
