@@ -301,8 +301,9 @@ def get_state_log(chain_spec, tx_hash, session=None):
 
 
 
-def cancel_obsoletes_by_cache(chain_spec, tx_hash):
-    session = SessionBase.create_session()
+def obsolete_by_cache(chain_spec, tx_hash, final, session=None):
+    session = SessionBase.bind_session(session)
+
     q = session.query(
             Otx.nonce.label('nonce'),
             TxCache.sender.label('sender'),
@@ -324,7 +325,8 @@ def cancel_obsoletes_by_cache(chain_spec, tx_hash):
 
     for otwo in q.all():
         try:
-            otwo.cancel(True, session=session)
+            otwo.cancel(final, session=session)
+            logg.debug('cancel {} final {}'.format(tx_hash, final))
         except TxStateChangeError as e:
             logg.exception('cancel non-final fail: {}'.format(e))
             session.close()
@@ -334,6 +336,7 @@ def cancel_obsoletes_by_cache(chain_spec, tx_hash):
             session.close()
             raise(e)
     session.commit()
-    session.close()
+
+    SessionBase.release_session(session)
 
     return tx_hash
