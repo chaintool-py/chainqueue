@@ -429,12 +429,13 @@ class Otx(SessionBase):
             raise TxStateChangeError('CANCEL cannot be set on an entry with FINAL state set ({})'.format(status_str(self.status)))
 
         if confirmed:
-            if self.status > 0 and not self.status & StatusBits.OBSOLETE:
+            if self.status > 0 and self.status & (StatusBits.OBSOLETE & StatusBits.IN_NETWORK) == 0:
                 SessionBase.release_session(session)
                 raise TxStateChangeError('CANCEL can only be set on an entry marked OBSOLETE ({})'.format(status_str(self.status)))
-            self.__set_status(StatusEnum.CANCELLED, session)
-        else:
-            self.__set_status(StatusEnum.OBSOLETED, session)
+            self.__set_status(StatusEnum.FINAL, session)
+        self.__set_status(StatusEnum.OBSOLETED, session)
+
+        self.__reset_status(StatusBits.RESERVED | StatusBits.QUEUED, session)
 
         if self.tracing:
             self.__state_log(session=session)
