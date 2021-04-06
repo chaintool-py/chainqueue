@@ -54,14 +54,13 @@ def set_sent(chain_spec, tx_hash, fail=False, session=None):
         SessionBase.release_session(session)
         raise(e)
 
-
     session.commit()
     SessionBase.release_session(session)
 
     return tx_hash
 
 
-def set_final(chain_spec, tx_hash, block=None, fail=False, session=None):
+def set_final(chain_spec, tx_hash, block=None, tx_index=None, fail=False, session=None):
     """Used to set the status of an incoming transaction result. 
 
     :param tx_hash: Transaction hash of record to modify
@@ -86,7 +85,6 @@ def set_final(chain_spec, tx_hash, block=None, fail=False, session=None):
             o.minefail(block, session=session)
         else:
             o.success(block, session=session)
-        session.commit()
     except TxStateChangeError as e:
         logg.exception('set final fail: {}'.format(e))
         SessionBase.release_session(session)
@@ -96,10 +94,10 @@ def set_final(chain_spec, tx_hash, block=None, fail=False, session=None):
         SessionBase.release_session(session)
         raise(e)
 
-    q = session.query(TxCache)
-    q = q.join(Otx)
-    q = q.filter(Otx.tx_hash==strip_0x(tx_hash))
-    o  = q.first()
+    if block != None:
+        TxCache.set_final(o.tx_hash, block, tx_index, session=session)
+
+    session.commit()
 
     SessionBase.release_session(session)
 

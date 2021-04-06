@@ -50,8 +50,6 @@ def get_tx_cache(chain_spec, tx_hash, session=None):
     q = q.filter(TxCache.otx_id==otx.id)
     txc = q.first()
 
-    SessionBase.release_session(session)
-
     # TODO: DRY, get_tx_cache / get_tx
     tx = {
         'tx_hash': add_0x(otx.tx_hash),
@@ -71,6 +69,8 @@ def get_tx_cache(chain_spec, tx_hash, session=None):
         'date_updated': txc.date_updated,
         'date_checked': txc.date_checked,
             }
+
+    SessionBase.release_session(session)
 
     return tx
 
@@ -195,7 +195,7 @@ def get_status_tx_cache(chain_spec, status, not_status=None, before=None, exact=
     q = session.query(Otx)
     q = q.join(TxCache)
     if before != None:
-        q = q.filter(TxCache.date_updated<before)
+        q = q.filter(Otx.date_updated<before)
     if exact:
         q = q.filter(Otx.status==status)
     else:

@@ -93,7 +93,7 @@ class TestTxQuery(TestTxBase):
 
 
     def test_paused_tx_cache(self):
-        set_waitforgas(self.tx_hash)
+        set_waitforgas(self.chain_spec, self.tx_hash)
         
         tx_hash = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
@@ -150,7 +150,7 @@ class TestTxQuery(TestTxBase):
         txs = get_paused_tx_cache(self.chain_spec, status=StatusBits.GAS_ISSUES, session=self.session)
         self.assertEqual(len(txs.keys()), 1)
 
-        set_waitforgas(tx_hash)
+        set_waitforgas(self.chain_spec, tx_hash)
         self.session.commit()
 
         txs = get_paused_tx_cache(self.chain_spec, status=StatusBits.GAS_ISSUES, session=self.session)

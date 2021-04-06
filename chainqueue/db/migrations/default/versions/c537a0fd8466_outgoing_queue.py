@@ -21,6 +21,7 @@ def upgrade():
             'otx',
             sa.Column('id', sa.Integer, primary_key=True),
             sa.Column('date_created', sa.DateTime, nullable=False),
+            sa.Column('date_updated', sa.DateTime, nullable=False),
             sa.Column('nonce', sa.Integer, nullable=False),
             sa.Column('tx_hash', sa.Text, nullable=False),
             sa.Column('signed_tx', sa.Text, nullable=False),
