@@ -460,11 +460,11 @@ class Otx(SessionBase):
 
         if confirmed:
             status = self.status
-            if self.status > 0 and self.status & (StatusBits.OBSOLETE & StatusBits.IN_NETWORK) == 0:
+            if self.status > 0 and self.status & (StatusBits.OBSOLETE | StatusBits.IN_NETWORK) == 0:
                 SessionBase.release_session(session)
-                raise TxStateChangeError('CANCEL can only be set on an entry marked OBSOLETE ({})'.format(status))
-            self.__set_status(StatusEnum.FINAL, session)
-        self.__set_status(StatusEnum.OBSOLETED, session)
+                raise TxStateChangeError('CANCEL can only be set on an entry marked OBSOLETE or IN_NETWORK ({})'.format(status))
+            self.__set_status(StatusBits.FINAL, session)
+        self.__set_status(StatusBits.OBSOLETE, session)
 
         self.__reset_status(StatusBits.RESERVED | StatusBits.QUEUED, session)
 
