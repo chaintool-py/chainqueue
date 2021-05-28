@@ -95,7 +95,10 @@ def set_final(chain_spec, tx_hash, block=None, tx_index=None, fail=False, sessio
         raise(e)
 
     if block != None:
-        TxCache.set_final(o.tx_hash, block, tx_index, session=session)
+        try:
+            TxCache.set_final(o.tx_hash, block, tx_index, session=session)
+        except NotLocalTxError:
+            logg.debug('otx for {} does not have cache complement'.format(tx_hash))
 
     session.commit()
 
@@ -115,7 +118,6 @@ def set_cancel(chain_spec, tx_hash, manual=False, session=None):
     :type manual: boolean
     :raises NotLocalTxError: If transaction not found in queue.
     """
-
     session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:

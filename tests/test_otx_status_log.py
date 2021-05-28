@@ -3,7 +3,7 @@ import unittest
 
 # local imports
 from chainqueue.db.models.otx import Otx
-from chainqueue.state import *
+from chainqueue.sql.state import *
 
 # test imports
 from tests.base import TestOtxBase
@@ -19,10 +19,10 @@ class TestOtxState(TestOtxBase):
    
 
     def test_state_log(self):
-        set_ready(self.chain_spec, self.tx_hash)
-        set_reserved(self.chain_spec, self.tx_hash)
-        set_sent(self.chain_spec, self.tx_hash)
-        set_final(self.chain_spec, self.tx_hash, block=1042)
+        set_ready(self.chain_spec, self.tx_hash, session=self.session)
+        set_reserved(self.chain_spec, self.tx_hash, session=self.session)
+        set_sent(self.chain_spec, self.tx_hash, session=self.session)
+        set_final(self.chain_spec, self.tx_hash, block=1042, session=self.session)
 
         state_log = get_state_log(self.chain_spec, self.tx_hash)
         self.assertEqual(state_log[0][1], StatusEnum.READYSEND)

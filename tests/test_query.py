@@ -3,14 +3,16 @@ import os
 import logging
 import unittest
 
-# local imports
-from chainqueue.query import *
-from chainqueue.tx import create
-from chainqueue.state import set_waitforgas
+# external imports
 from hexathon import (
         add_0x,
         strip_0x,
         )
+
+# local imports
+from chainqueue.sql.query import *
+from chainqueue.sql.tx import create
+from chainqueue.sql.state import set_waitforgas
 
 # test imports
 from tests.base import TestTxBase

@@ -11,17 +11,20 @@ from chainqueue.db.models.tx import TxCache
 from chainlib.chain import ChainSpec
 import alembic
 import alembic.config
-from hexathon import add_0x
+from hexathon import (
+        add_0x,
+        strip_0x,
+        )
 
 # local imports
 from chainqueue.db import dsn_from_config
 from chainqueue.db.models.base import SessionBase
-from chainqueue.tx import create
+from chainqueue.sql.tx import create
 
 script_dir = os.path.realpath(os.path.dirname(__file__))
 
-logging.basicConfig(level=logging.WARNING)
-logg = logging.getLogger().getChild(__name__)
+#logg = logging.getLogger().getChild(__name__)
+logg = logging.getLogger()
 
 
 class TestBase(unittest.TestCase):
@@ -45,7 +48,7 @@ class TestBase(unittest.TestCase):
         SessionBase.poolable = False
         SessionBase.transactional = False
         SessionBase.procedural = False
-        SessionBase.connect(dsn, debug=True)
+        SessionBase.connect(dsn, debug=bool(os.environ.get('DATABASE_DEBUG'))) # TODO: evaluates to "true" even if string is 0
 
         ac = alembic.config.Config(os.path.join(migrationsdir, 'alembic.ini'))
         ac.set_main_option('sqlalchemy.url', dsn)
@@ -57,7 +60,7 @@ class TestBase(unittest.TestCase):
         self.session = SessionBase.create_session()
 
         self.chain_spec = ChainSpec('evm', 'foo', 42, 'bar')
-
+    
 
     def tearDown(self):
         self.session.commit()
@@ -68,13 +71,16 @@ class TestOtxBase(TestBase):
 
     def setUp(self):
         super(TestOtxBase, self).setUp()
-        self.tx_hash = add_0x(os.urandom(32).hex())
-        self.tx = add_0x(os.urandom(128).hex())
+        self.tx_hash = os.urandom(32).hex()
+        self.tx = os.urandom(128).hex()
         self.nonce = 42
         self.alice = add_0x(os.urandom(20).hex())
 
         tx_hash = create(self.chain_spec, self.nonce, self.alice, self.tx_hash, self.tx, session=self.session)
         self.assertEqual(tx_hash, self.tx_hash)
+        self.session.commit()
+
+        logg.info('using tx hash {}'.format(self.tx_hash))
 
 
 class TestTxBase(TestOtxBase):

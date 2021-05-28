@@ -151,7 +151,7 @@ class Otx(SessionBase):
         if not self.status & StatusBits.RESERVED:
             status = status_str(self.status)
             SessionBase.release_session(session)
-            raise TxStateChangeError('FUBAR on tx that has not been RESEREVED ({})'.format(status))
+            raise TxStateChangeError('FUBAR on tx that has not been RESERVED ({})'.format(status))
 
 
         self.__set_status(StatusBits.UNKNOWN_ERROR | StatusBits.FINAL, session)
@@ -187,7 +187,7 @@ class Otx(SessionBase):
         if not self.status & StatusBits.RESERVED:
             status = status_str(self.status)
             SessionBase.release_session(session)
-            raise TxStateChangeError('REJECTED on tx that has not been RESEREVED ({})'.format(status))
+            raise TxStateChangeError('REJECTED on tx that has not been RESERVED ({})'.format(status))
 
 
 
@@ -219,8 +219,8 @@ class Otx(SessionBase):
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry already OBSOLETE ({})'.format(status))
 
         self.__set_status(StatusBits.OBSOLETE, session)
-        #if manual:
-        #    self.__set_status(StatusBits.MANUAL, session)
+        if manual:
+            self.manual(session=session)
         self.__reset_status(StatusBits.QUEUED | StatusBits.IN_NETWORK, session)
 
         if self.tracing:
@@ -245,6 +245,7 @@ class Otx(SessionBase):
             self.__state_log(session=session)
 
         SessionBase.release_session(session)
+
 
     def retry(self, session=None):
         """Marks transaction as ready to retry after a timeout following a sendfail or a completed gas funding.
@@ -326,7 +327,7 @@ class Otx(SessionBase):
         if not self.status & StatusBits.RESERVED:
             status = self.status
             SessionBase.release_session(session)
-            raise TxStateChangeError('SENT on tx that has not been RESEREVED ({})'.format(status))
+            raise TxStateChangeError('SENT on tx that has not been RESERVED ({})'.format(status))
 
         self.__set_status(StatusBits.IN_NETWORK, session)
         self.__reset_status(StatusBits.RESERVED | StatusBits.DEFERRED | StatusBits.QUEUED | StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR, session)
@@ -360,7 +361,7 @@ class Otx(SessionBase):
         if not self.status & StatusBits.RESERVED:
             status = self.status
             SessionBase.release_session(session)
-            raise TxStateChangeError('SENDFAIL on tx that has not been RESEREVED ({})'.format(status))
+            raise TxStateChangeError('SENDFAIL on tx that has not been RESERVED ({})'.format(status))
 
         self.__set_status(StatusBits.LOCAL_ERROR | StatusBits.DEFERRED, session)
         self.__reset_status(StatusBits.RESERVED | StatusBits.QUEUED | StatusBits.GAS_ISSUES, session)
