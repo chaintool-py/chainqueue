@@ -72,18 +72,31 @@ class HexDir:
         return r
 
 
+    def __cursor(self, idx):
+        return idx * (self.prefix_length + self.key_length)
+
+
     def set_prefix(self, idx, prefix):
         l = len(prefix)
         if l != self.prefix_length:
             raise ValueError('expected prefix length {}, got {}'.format(self.prefix_length, l))
         if not isinstance(prefix, bytes):
             raise ValueError('prefix must be bytes, got {}'.format(type(content).__name__))
-        cursor = idx * (self.prefix_length + self.key_length)
+        cursor = self.__cursor(idx)
         f = open(self.master_file, 'rb+')
         f.seek(cursor)
         f.write(prefix)
         f.close()
 
+
+    def get(self, idx):
+        cursor = self.__cursor(idx)
+        f = open(self.master_file, 'rb')
+        f.seek(cursor)
+        prefix = f.read(self.prefix_length)
+        key = f.read(self.key_length)
+        f.close()
+        return (prefix, key) 
 
     def to_subpath(self, hx):
         lead = ''

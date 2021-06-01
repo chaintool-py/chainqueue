@@ -71,5 +71,14 @@ class HexDirTest(unittest.TestCase):
         self.assertEqual(b'ff', r)
 
 
+    def test_get(self):
+        self.hexdir.add(b'\xde\xad\xbe\xef', b'foo', b'ab')
+        self.hexdir.add(b'\xbe\xef\xfe\xed', b'bar', b'cd')
+        self.hexdir.add(b'\x01\x02\x03\x04', b'baz', b'ef')
+        (prefix, key) = self.hexdir.get(1)
+        self.assertEqual(b'\xbe\xef\xfe\xed', key)
+        self.assertEqual(b'cd', prefix)
+
+
 if __name__ == '__main__':
     unittest.main()

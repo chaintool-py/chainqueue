@@ -8,6 +8,7 @@ import os
 # local imports
 from chainqueue.fs.cache import FsQueue
 from chainqueue.fs.dir import HexDir
+from chainqueue.enum import StatusBits
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
@@ -33,6 +34,29 @@ class HexDirTest(unittest.TestCase):
         self.q.add(tx_hash, tx_content)
 
         f = open(os.path.join(self.q.path_state['new'], tx_hash.hex()), 'rb')
+        r = f.read()
+        f.close()
+        self.assertEqual(r, b'\x00' * 8)
+
+    
+    def test_change(self):
+        tx_hash = os.urandom(32)
+        tx_content = os.urandom(128)
+        self.q.add(tx_hash, tx_content)
+        self.q.set(tx_hash, StatusBits.QUEUED)
+        
+        (tx_status, tx_content_retrieved) = self.q.get(tx_hash)
+        status = int.from_bytes(tx_status, byteorder='big')
+        self.assertEqual(status & StatusBits.QUEUED, StatusBits.QUEUED)
+
+
+    def test_move(self):
+        tx_hash = os.urandom(32)
+        tx_content = os.urandom(128)
+        self.q.add(tx_hash, tx_content)
+        self.q.move(tx_hash, 'new', 'ready')
+       
+        f = open(os.path.join(self.q.path_state['ready'], tx_hash.hex()), 'rb')
         r = f.read()
         f.close()
         self.assertEqual(r, b'\x00' * 8)

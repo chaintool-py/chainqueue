@@ -2,6 +2,7 @@
 import stat
 import logging
 import os
+import stat
 
 # local imports
 from chainqueue.enum import (
@@ -19,7 +20,7 @@ class FsQueueBackend:
         raise NotImplementedError()
 
 
-    def get_index(self, idx):
+    def get(self, idx):
         raise NotImplementedError()
 
 
@@ -58,9 +59,42 @@ class FsQueue:
         f.close()
 
         ptr_path = os.path.join(self.path_state['new'], key_hex)
-        os.link(entry_path, ptr_path)
+        os.symlink(entry_path, ptr_path)
 
         logg.debug('added new queue entry {} -> {} index {}'.format(ptr_path, entry_path, c))
+
+
+    def __get_backend_idx(self, key):
+        entry_path = os.path.join(self.index_path, key.hex())
+        f = open(entry_path, 'rb')
+        b = f.read()
+        f.close()
+        return int.from_bytes(b, byteorder='big')
+
+
+    def get(self, key):
+        idx = self.__get_backend_idx(key)
+        return self.backend.get(idx)
+
+
+    def move(self, key, queuestate_from, queuestate_to):
+        key_hex = key.hex()
+        cur_path = os.path.join(self.path_state[queuestate_from], key_hex)
+        fi = os.lstat(cur_path)
+        if not stat.S_ISLNK(fi.st_mode):
+            logg.error('no such entry {}'.format(cur_path))
+            raise FileNotFoundError(key_hex)
+        new_path = os.path.join(self.path_state[queuestate_to], key_hex)
+        os.rename(cur_path, new_path)
+
+
+    def set(self, key, status):
+        idx = self.__get_backend_idx(key) 
+
+        prefix = status_bytes(status)
+        self.backend.set_prefix(idx, prefix)
+
+        logg.debug('set queue state {} to {}'.format(key.hex(), status))
 
 
     @staticmethod
