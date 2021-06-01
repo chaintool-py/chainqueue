@@ -15,6 +15,7 @@ class HexDir:
         self.path = root_path
         self.key_length = key_length
         self.prefix_length = prefix_length
+        self.entry_length = key_length + prefix_length
         self.__levels = levels + 2
         fi = None
         try:
@@ -44,6 +45,8 @@ class HexDir:
         key_hex = key.hex()
         entry_path = self.to_filepath(key_hex)
 
+        c = self.count()
+
         os.makedirs(os.path.dirname(entry_path), exist_ok=True)
         f = open(entry_path, 'wb')
         f.write(content)
@@ -55,7 +58,18 @@ class HexDir:
         f.write(key)
         f.close()
 
-        logg.info('created new entry {} in {}'.format(key_hex, entry_path)) 
+        logg.info('created new entry {} idx {} in {}'.format(key_hex, c, entry_path)) 
+    
+        return c
+
+
+    def count(self):
+        fi = os.stat(self.master_file)
+        c = fi.st_size / self.entry_length
+        r = int(c)
+        if r != c: # TODO: verify valid for check if evenly divided
+            raise IndexError('master file not aligned')
+        return r
 
 
     def set_prefix(self, idx, prefix):

@@ -51,6 +51,13 @@ class HexDirTest(unittest.TestCase):
             self.hexdir.add(label, content, prefix=b'a')
 
 
+    def test_index(self):
+        self.hexdir.add(b'\xde\xad\xbe\xef', b'foo', b'ab')
+        self.hexdir.add(b'\xbe\xef\xfe\xed', b'bar', b'cd')
+        c = self.hexdir.add(b'\x01\x02\x03\x04', b'baz', b'ef')
+        self.assertEqual(c, 2)
+
+
     def test_edit(self):
         self.hexdir.add(b'\xde\xad\xbe\xef', b'foo', b'ab')
         self.hexdir.add(b'\xbe\xef\xfe\xed', b'bar', b'cd')
