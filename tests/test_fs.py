@@ -6,7 +6,7 @@ import logging
 import os
 
 # local imports
-from chainqueue.fs.cache import FsQueue
+from chainqueue.fs.queue import FsQueue
 from chainqueue.fs.dir import HexDir
 from chainqueue.enum import StatusBits
 

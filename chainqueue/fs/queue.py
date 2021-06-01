@@ -45,6 +45,8 @@ class FsQueue:
             self.path_state[r[0]] = r[1]
 
         self.index_path = os.path.join(self.path, '.active')
+        self.nonce_path = os.path.join(self.path, '.accounts')
+
         os.makedirs(self.index_path, exist_ok=True)
 
 
@@ -100,7 +102,8 @@ class FsQueue:
             os.unlink(cur_path)
 
         logg.debug('purge queue entry {}'.format(key_hex))
-        
+       
+
     def set(self, key, status):
         idx = self.__get_backend_idx(key) 
 
