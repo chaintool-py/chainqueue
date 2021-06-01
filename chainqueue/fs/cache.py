@@ -72,22 +72,35 @@ class FsQueue:
         return int.from_bytes(b, byteorder='big')
 
 
+
     def get(self, key):
         idx = self.__get_backend_idx(key)
         return self.backend.get(idx)
 
 
-    def move(self, key, queuestate_from, queuestate_to):
+    def move(self, key, to_state, from_state=None):
         key_hex = key.hex()
-        cur_path = os.path.join(self.path_state[queuestate_from], key_hex)
+        cur_path = os.path.join(self.path_state[from_state], key_hex)
         fi = os.lstat(cur_path)
         if not stat.S_ISLNK(fi.st_mode):
             logg.error('no such entry {}'.format(cur_path))
             raise FileNotFoundError(key_hex)
-        new_path = os.path.join(self.path_state[queuestate_to], key_hex)
+        new_path = os.path.join(self.path_state[to_state], key_hex)
         os.rename(cur_path, new_path)
 
 
+    def purge(self, key, queuestate):
+        key_hex = key.hex()
+        cur_path = os.path.join(self.path_state[queuestate], key_hex)
+        active_path = os.path.join(self.index_path, key_hex)
+        try:
+            fi = os.stat(cur_path)
+            os.unlink(active_path)
+        except FileNotFoundError:
+            os.unlink(cur_path)
+
+        logg.debug('purge queue entry {}'.format(key_hex))
+        
     def set(self, key, status):
         idx = self.__get_backend_idx(key) 
 

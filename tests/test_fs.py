@@ -54,12 +54,28 @@ class HexDirTest(unittest.TestCase):
         tx_hash = os.urandom(32)
         tx_content = os.urandom(128)
         self.q.add(tx_hash, tx_content)
-        self.q.move(tx_hash, 'new', 'ready')
+        self.q.move(tx_hash, 'ready', from_state='new')
        
         f = open(os.path.join(self.q.path_state['ready'], tx_hash.hex()), 'rb')
         r = f.read()
         f.close()
         self.assertEqual(r, b'\x00' * 8)
+
+
+    def test_purge(self):
+        tx_hash = os.urandom(32)
+        tx_content = os.urandom(128)
+        self.q.add(tx_hash, tx_content)
+        self.q.move(tx_hash, 'ready', from_state='new')
+        self.q.purge(tx_hash, 'ready')
+      
+        with self.assertRaises(FileNotFoundError):
+            entry_path = os.path.join(self.q.path_state['ready'], tx_hash.hex())
+            os.stat(entry_path)
+
+        with self.assertRaises(FileNotFoundError):
+            entry_path = os.path.join(self.q.index_path, tx_hash.hex())
+            os.stat(entry_path)
 
 
 if __name__ == '__main__':
