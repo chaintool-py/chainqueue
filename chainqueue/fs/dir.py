@@ -21,9 +21,7 @@ class HexDir:
             fi = os.stat(self.path)
             self.__verify_directory()
         except FileNotFoundError:
-            HexDir.__setup_directory(self.path)
-        if not stat.S_ISDIR(fi.st_mode):
-            raise ValueError('{} is not a directory'.format(self.path))
+            HexDir.__prepare_directory(self.path)
         self.master_file = os.path.join(self.path, 'master')
 
 
@@ -92,6 +90,10 @@ class HexDir:
 
 
     def __verify_directory(self):
+        #if not stat.S_ISDIR(fi.st_mode):
+        #    raise ValueError('{} is not a directory'.format(self.path))
+        f = opendir(self.path)
+        f.close()
         return True
 
 

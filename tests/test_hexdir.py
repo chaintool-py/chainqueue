@@ -16,7 +16,7 @@ class HexDirTest(unittest.TestCase):
 
     def setUp(self):
         self.dir = tempfile.mkdtemp() 
-        self.hexdir = HexDir(self.dir, 4, 3, 2)
+        self.hexdir = HexDir(os.path.join(self.dir, 'q'), 4, 3, 2)
         logg.debug('setup hexdir root {}'.format(self.dir))
       
 
@@ -30,7 +30,7 @@ class HexDirTest(unittest.TestCase):
         prefix = b'ab'
         label = b'\xde\xad\xbe\xef'
         self.hexdir.add(label, content, prefix=prefix)
-        file_path = os.path.join(self.dir, 'DE', 'AD', 'BE', label.hex().upper())
+        file_path = os.path.join(self.dir, 'q', 'DE', 'AD', 'BE', label.hex().upper())
         
         f = open(file_path, 'rb')
         r = f.read()
