@@ -8,7 +8,10 @@ from sqlalchemy import or_
 from sqlalchemy import not_
 from sqlalchemy import tuple_
 from sqlalchemy import func
-from hexathon import add_0x
+from hexathon import (
+       add_0x,
+       strip_0x,
+       )
 
 # local imports
 from chainqueue.db.models.otx import Otx
@@ -274,7 +277,7 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
         if o == None:
             continue
 
-        tx_signed_bytes = bytes.fromhex(o.signed_tx[2:])
+        tx_signed_bytes = bytes.fromhex(strip_0x(o.signed_tx))
         tx = decoder(tx_signed_bytes, chain_spec)
         txs[o.tx_hash] = o.signed_tx
         

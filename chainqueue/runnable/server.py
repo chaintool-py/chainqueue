@@ -71,7 +71,7 @@ class SessionController:
         self.srv = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_STREAM)
         self.srv.bind(config.get('SESSION_SOCKET_PATH'))
         self.srv.listen(2)
-        self.srv.settimeout(5.0)
+        self.srv.settimeout(1.0)
 
     def shutdown(self, signo, frame):
         if self.dead:
@@ -99,7 +99,7 @@ signal.signal(signal.SIGINT, ctrl.shutdown)
 signal.signal(signal.SIGTERM, ctrl.shutdown)
 
 dsn = dsn_from_config(config)
-backend = SQLBackend(dsn)
+backend = SQLBackend(dsn, debug=config.true('DATABASE_DEBUG'))
 adapter = EthAdapter(backend)
 chain_spec = ChainSpec.from_chain_str('evm:mainnet:1')
 
@@ -118,7 +118,9 @@ if __name__ == '__main__':
                 logg.error('entity on socket path is not a socket')
                 break
             if srvs == None:
-                logg.debug('ping')
+                txs = adapter.process(chain_spec)
+                for k in txs.keys():
+                    logg.debug('txs {} {}'.format(k, txs[k]))
                 continue
         srvs.setblocking(False)
         data_in = srvs.recv(1024)
