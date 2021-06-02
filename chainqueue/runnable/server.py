@@ -124,6 +124,7 @@ if __name__ == '__main__':
         data_in = srvs.recv(1024)
         data_in_str = data_in.decode('utf-8')
         data = bytes.fromhex(strip_0x(data_in_str))
-        adapter.add(chain_spec, data)
+        r = adapter.add(chain_spec, data)
+        srvs.send(r.to_bytes(4, byteorder='big'))
 
     ctrl.shutdown(None, None)

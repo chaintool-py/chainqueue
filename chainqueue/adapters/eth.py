@@ -16,5 +16,6 @@ class EthAdapter:
     def add(self, chain_spec, bytecode):
         tx = unpack(bytecode, chain_spec)
         session = self.backend.create_session()
-        self.backend.create(chain_spec, tx['nonce'], tx['from'], tx['hash'], add_0x(bytecode.hex()), session=session)
+        r = self.backend.create(chain_spec, tx['nonce'], tx['from'], tx['hash'], add_0x(bytecode.hex()), session=session)
         session.close()
+        return r
