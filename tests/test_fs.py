@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
 
 
-class HexDirTest(unittest.TestCase):
+class FsQueueTest(unittest.TestCase):
 
     def setUp(self):
         self.dir = tempfile.mkdtemp() 
