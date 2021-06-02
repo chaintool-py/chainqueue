@@ -17,6 +17,7 @@ from xdg.BaseDirectory import (
         )
 from hexathon import strip_0x
 from chainlib.chain import ChainSpec
+from chainlib.eth.connection import EthHTTPConnection
 
 # local imports
 from chainqueue.sql.backend import SQLBackend
@@ -33,6 +34,8 @@ runtime_dir = os.path.join(get_runtime_dir(), 'chainqueue')
 
 argparser = argparse.ArgumentParser('chainqueue transaction submission and trigger server')
 argparser.add_argument('-c', '--config', dest='c', type=str, default=config_dir, help='configuration directory')
+argparser.add_argument('-p', type=str, help='rpc endpoint')
+argparser.add_argument('-i', type=str, help='chain spec')
 argparser.add_argument('--runtime-dir', dest='runtime_dir', type=str, default=runtime_dir, help='runtime directory')
 argparser.add_argument('--session-id', dest='session_id', type=str, default=str(uuid.uuid4()), help='session id to use for session')
 argparser.add_argument('-v', action='store_true', help='be verbose')
@@ -48,6 +51,8 @@ config = confini.Config(args.c)
 config.process()
 args_override = {
             'SESSION_RUNTIME_DIR': getattr(args, 'runtime_dir'),
+            'SESSION_CHAIN_SPEC': getattr(args, 'i'),
+            'RPC_ENDPOINT': getattr(args, 'p'),
         }
 config.dict_override(args_override, 'cli args')
 config.add(getattr(args, 'session_id'), '_SESSION_ID', True)
@@ -98,10 +103,12 @@ ctrl = SessionController(config)
 signal.signal(signal.SIGINT, ctrl.shutdown)
 signal.signal(signal.SIGTERM, ctrl.shutdown)
 
+chain_spec = ChainSpec.from_chain_str(config.get('SESSION_CHAIN_SPEC'))
+
 dsn = dsn_from_config(config)
 backend = SQLBackend(dsn, debug=config.true('DATABASE_DEBUG'))
 adapter = EthAdapter(backend)
-chain_spec = ChainSpec.from_chain_str('evm:mainnet:1')
+rpc = EthHTTPConnection(url=config.get('RPC_ENDPOINT'), chain_spec=chain_spec)
 
 if __name__ == '__main__':
     while True:
@@ -118,9 +125,10 @@ if __name__ == '__main__':
                 logg.error('entity on socket path is not a socket')
                 break
             if srvs == None:
-                txs = adapter.process(chain_spec)
+                txs = adapter.upcoming(chain_spec)
                 for k in txs.keys():
                     logg.debug('txs {} {}'.format(k, txs[k]))
+                    adapter.dispatch(chain_spec, rpc, k, txs[k])
                 continue
         srvs.setblocking(False)
         data_in = srvs.recv(1024)
