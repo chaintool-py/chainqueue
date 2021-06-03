@@ -12,8 +12,9 @@ import uuid
 # external imports
 import confini
 from xdg.BaseDirectory import (
-        load_first_config,
+        xdg_data_dirs,
         get_runtime_dir,
+        load_first_config,
         )
 from hexathon import strip_0x
 from chainlib.chain import ChainSpec
@@ -30,13 +31,15 @@ logg = logging.getLogger()
 default_config_dir = load_first_config('chainqueue')
 config_dir = os.environ.get('CONFINI_DIR', default_config_dir)
 
-runtime_dir = os.path.join(get_runtime_dir(), 'chainqueue')
+default_runtime_dir = os.path.join(get_runtime_dir(), 'chainqueue')
+default_data_dir = os.path.join(xdg_data_dirs[0], 'chainqueue')
 
 argparser = argparse.ArgumentParser('chainqueue transaction submission and trigger server')
 argparser.add_argument('-c', '--config', dest='c', type=str, default=config_dir, help='configuration directory')
 argparser.add_argument('-p', type=str, help='rpc endpoint')
 argparser.add_argument('-i', type=str, help='chain spec')
-argparser.add_argument('--runtime-dir', dest='runtime_dir', type=str, default=runtime_dir, help='runtime directory')
+argparser.add_argument('--runtime-dir', dest='runtime_dir', type=str, default=default_runtime_dir, help='runtime directory')
+argparser.add_argument('--data-dir', dest='data_dir', type=str, default=default_data_dir, help='data directory')
 argparser.add_argument('--session-id', dest='session_id', type=str, default=str(uuid.uuid4()), help='session id to use for session')
 argparser.add_argument('-v', action='store_true', help='be verbose')
 argparser.add_argument('-vv', action='store_true', help='be very verbose')
@@ -47,12 +50,14 @@ if args.vv:
 elif args.v:
     logg.setLevel(logging.INFO)
 
+# process config
 config = confini.Config(args.c)
 config.process()
 args_override = {
             'SESSION_RUNTIME_DIR': getattr(args, 'runtime_dir'),
             'SESSION_CHAIN_SPEC': getattr(args, 'i'),
             'RPC_ENDPOINT': getattr(args, 'p'),
+            'PATH_DATA': getattr(args, 'data_dir'),
         }
 config.dict_override(args_override, 'cli args')
 config.add(getattr(args, 'session_id'), '_SESSION_ID', True)
@@ -60,7 +65,20 @@ config.add(getattr(args, 'session_id'), '_SESSION_ID', True)
 if not config.get('SESSION_SOCKET_PATH'):
     socket_path = os.path.join(config.get('SESSION_RUNTIME_DIR'), config.get('_SESSION_ID'), 'chainqueue.sock')
     config.add(socket_path, 'SESSION_SOCKET_PATH', True)
+
+if config.get('DATABASE_ENGINE') == 'sqlite':
+    config.add(os.path.join(config.get('PATH_DATA'), config.get('DATABASE_NAME')), 'DATABASE_NAME', True)
+    
+
 logg.debug('config loaded:\n{}'.format(config))
+
+
+# verify setup
+try:
+    os.stat(config.get('DATABASE_NAME'))
+except FileNotFoundError:
+    sys.stderr.write('database file {} not found. please run database migration script first'.format(config.get('DATABASE_NAME')))
+    sys.exit(1)
 
 
 class SessionController:
