@@ -1,0 +1,8 @@
+- 0.0.2
+	* add fs backend
+	* add flexible data directory
+	* factor out sql backend as module
+- 0.0.1 (unreleased)
+	* add queue states
+	* add queries
+	* add tx creation helper

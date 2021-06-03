@@ -1,11 +1,11 @@
 from alembic import op
 import sqlalchemy as sa
 
-def chainqueue_upgrade(major, minor, patch):
+def chainqueue_upgrade(major=0, minor=0, patch=1):
     r0_0_1_u()
 
 
-def chainqueue_downgrade(major, minor, patch):
+def chainqueue_downgrade(major=0, minor=0, patch=1):
     r0_0_1_d()
 
 
