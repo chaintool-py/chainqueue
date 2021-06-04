@@ -339,3 +339,18 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
     SessionBase.release_session(session)
 
     return txs
+
+
+def count_tx(chain_spec, address=None, status=None, status_target=None, session=None):
+    session = SessionBase.bind_session(session)
+    q = session.query(Otx.id)
+    q = q.join(TxCache)
+    if status != None:
+        if status_target == None:
+            status_target = status
+        q = q.filter(Otx.status.op('&')(status)==status_target)
+    if address != None:
+        q = q.filter(TxCache.sender==address)
+    result = q.count()
+    SessionBase.release_session(session)
+    return result

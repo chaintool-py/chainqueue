@@ -12,7 +12,14 @@ from hexathon import (
 # local imports
 from chainqueue.sql.query import *
 from chainqueue.sql.tx import create
-from chainqueue.sql.state import set_waitforgas
+from chainqueue.sql.state import (
+        set_waitforgas,
+        set_ready,
+        set_reserved,
+        set_sent,
+        set_final,
+        )
+from chainqueue.enum import StatusBits
 
 # test imports
 from tests.base import TestTxBase
@@ -160,6 +167,67 @@ class TestTxQuery(TestTxBase):
 
         txs = get_paused_tx_cache(self.chain_spec, status=StatusBits.GAS_ISSUES, sender=self.bob, session=self.session)
         self.assertEqual(len(txs.keys()), 1)
+
+
+    def test_count(self):
+        for i in range(3):
+            tx_hash = add_0x(os.urandom(32).hex())
+            signed_tx = add_0x(os.urandom(128).hex())
+            create(
+                    self.chain_spec,
+                    i,
+                    self.alice,
+                    tx_hash,
+                    signed_tx,
+                    session=self.session,
+                    )
+            txc = TxCache(
+                tx_hash,
+                self.alice,
+                self.bob,
+                self.foo_token,
+                self.bar_token,
+                self.from_value,
+                self.to_value,
+                session=self.session,
+                )
+            self.session.add(txc)
+            set_ready(self.chain_spec, tx_hash, session=self.session)
+            set_reserved(self.chain_spec, tx_hash, session=self.session)
+            if i > 0:
+                set_sent(self.chain_spec, tx_hash, session=self.session)
+            if i == 2:
+                set_final(self.chain_spec, tx_hash, session=self.session)
+
+        tx_hash = add_0x(os.urandom(32).hex())
+        signed_tx = add_0x(os.urandom(128).hex())
+        create(
+                self.chain_spec,
+                i,
+                self.bob,
+                tx_hash,
+                signed_tx,
+                session=self.session,
+                )
+        txc = TxCache(
+            tx_hash,
+            self.bob,
+            self.carol,
+            self.foo_token,
+            self.bar_token,
+            self.from_value,
+            self.to_value,
+            session=self.session,
+            )
+
+        self.session.add(txc)
+        set_ready(self.chain_spec, tx_hash, session=self.session)
+        set_reserved(self.chain_spec, tx_hash, session=self.session)
+        set_sent(self.chain_spec, tx_hash, session=self.session)
+        self.session.commit()
+
+        self.assertEqual(count_tx(self.chain_spec, status=StatusBits.IN_NETWORK | StatusBits.FINAL, status_target=StatusBits.IN_NETWORK), 2)
+        self.assertEqual(count_tx(self.chain_spec, address=self.alice, status=StatusBits.IN_NETWORK | StatusBits.FINAL, status_target=StatusBits.IN_NETWORK), 1)
 
 
 if __name__ == '__main__':

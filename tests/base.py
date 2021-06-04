@@ -88,6 +88,7 @@ class TestTxBase(TestOtxBase):
     def setUp(self):
         super(TestTxBase, self).setUp()
         self.bob = add_0x(os.urandom(20).hex())
+        self.carol = add_0x(os.urandom(20).hex())
         self.foo_token = add_0x(os.urandom(20).hex())
         self.bar_token = add_0x(os.urandom(20).hex())
         self.from_value = 42
