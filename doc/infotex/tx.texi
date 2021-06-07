@@ -1,0 +1,29 @@
+@node chainqueue-tx
+@section Transaction representation
+
+Transactions in chainqueue are chain-agnostic. Their representation should only presume a generalized concept of a chain transaction. Interpretation of what a transaction acutally contains or means is left to the client code of the queue to process.
+
+In storage each record is divided into two parts: A @emph{mandatory} part, and a @emph{cache} part.
+
+
+@subsection Mandatory record
+
+This consists of the data required to order transactions, and to actually them to the network. Specifically, it contains:
+
+@itemize
+@item @strong{hash} of the transaction
+@item the serialized transaction @strong{payload}
+@item the transaction @strong{nonce} 
+@item the @xref{chainqueue-states, queue state}
+@item the @strong{block number} of a confirmed transaction
+@end itemize
+
+
+@subsection Cache record
+
+With exception of the @emph{nonce}, the @emph{cache} part of the record contains deserialized fields of the transaction, all of which can be reconstructed by the client code intepreting the transaction payload in the @emph{mandatory} part.
+
+The queue can still work without the cache record, but keeping one enables conditional ordering and execution, e.g. @emph{@guillemetleft{}the first unsent transaction nonce from sender S.@guillemetright{}}
+
+Additionally, the cache records curates some additional token semantics, defining in essence a transaction as @emph{@guillemetleft{}sender S sends X amount of token A as Y amount of token B to recipient R@guillemetright{}}.
+

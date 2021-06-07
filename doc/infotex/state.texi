@@ -1,0 +1,130 @@
+@node chainqueue-states
+@section State transitions
+
+Queued transactions are controlled using a combination of state bits, enumerated to human-readable labels.
+
+Some of these bits may only be set if certain bits have previously been set.
+
+Certain combinations of bits constitute @emph{semantic} states, intended for human consumption.
+
+
+@subsection State bits
+
+@table @code
+@item QUEUED
+Transaction is ready to send to network. 
+@item RESERVED
+Transaction is assigned to a process which will send it to the network.
+@item IN_NETWORK
+The transaction has been sent to the network.
+@item DEFERRED
+A transaction send could not be completed, and should be retired later.
+@item GAS_ISSUES
+The transaction sender does not have sufficient network token balance to send the transaction.
+@item LOCAL_ERROR
+The transaction request could not be sent, e.g. because the node was unavailable.
+@item NODE_ERROR
+The network gateway node rejected the transaction. (will always be a FINAL state).
+@item NETWORK_ERROR
+The network rejected the state change requested by the transaction (will always be a FINAL state).
+@item UNKNOWN_ERROR
+Any other error (will always be a FINAL state).
+@item FINAL
+The transaction request will not be processed further.
+@item OBSOLETE
+The transaction request has been superseded by a different transaction, e.g. an identical replacement transaction with a higher fee.
+@item MANUAL
+The state of the transaction request has been manipulated manually.
+@end table
+
+@subsection State bit transitions
+
+When the @strong{FINAL} bit is set, no further state changes may be made.
+
+@multitable .25. 75
+@headitem bit
+@tab precondition
+@item QUEUED
+@tab @emph{none} | DEFERRED | GAS_ISSUES
+@item RESERVED
+@tab QUEUED
+@item IN_NETWORK
+@tab RESERVED
+@item GAS_ISSUES
+@tab @emph{none}
+@item DEFERRED
+@tab RESERVED
+@end multitable
+
+
+@subsection State semantics
+
+@subsubsection Clean states
+
+@multitable .25 .50 .25
+@headitem state
+@tab description
+@tab bits set
+@item PENDING
+@tab The state of the transaction when it first enters the queue.
+@tab (none)
+@item READYSEND
+@tab Transaction is ready to send to network
+@tab QUEUED
+@item RESERVED
+@tab Transaction is assigned to a process which will send it to the network.
+@tab QUEUED, RESERVED
+@item SENT
+@tab Transaction has been sent to the network
+@tab IN_NETWORK
+@item SUCCESS
+@tab The transaction has successfully changed the network state.
+@tab IN_NETWORK, FINAL
+@item REVERTED
+@tab The transaction was included by the network, but failed to change the network state.
+@tab IN_NETWORK, NETWORK_ERROR, FINAL
+@end multitable
+
+
+@subsubsection Exception states
+
+@multitable .25 .50 .25
+@headitem state
+@tab description
+@tab bits set
+@item GAS_ISSUES
+@tab The transaction sender does not have sufficient network token balance to send the transaction.
+@tab GAS_ISSUES
+@item RETRY
+@tab Transaction should be retried after a grace period
+@tab QUEUED, DEFERRED
+@item SENDFAIL
+@tab The transaction request could not be sent, e.g. because the node was unavailable.
+@tab DEFERRED, LOCAL_ERROR
+@item REJECTED
+@tab The transaction was rejected by the node. 
+@tab NODE_ERROR, FINAL
+@end multitable
+
+
+@subsubsection Replacement states
+
+@multitable .25 .50 .25
+@headitem state
+@tab description
+@tab bits set
+@item OBSOLETED
+@tab A attempt has been made to replace the transaction. 
+@tab OBSOLETE[, IN_NETWORK]
+@item CANCELLED
+@tab A different replacement transaction has been confirmed by the network.
+@tab OBSOLETE, FINAL[, IN_NETWORK]
+@item OVERRIDDEN
+@tab The transaction has been cancelled by an explicit command.
+@tab OBSOLETE, FINAL, MANUAL[, IN_NETWORK]
+@end multitable
+
+
+@subsection State log
+
+State transisitons can optionally be logged. This provides a list of date to state bitfield values for every change for every transaction.

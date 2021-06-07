@@ -51,7 +51,7 @@ class StatusEnum(enum.IntEnum):
     SENDFAIL = StatusBits.DEFERRED | StatusBits.LOCAL_ERROR
     RETRY = StatusBits.QUEUED | StatusBits.DEFERRED 
     READYSEND = StatusBits.QUEUED
-    RESERVED = StatusBits.RESERVED
+    RESERVED = StatusBits.QUEUED | StatusBits.RESERVED
 
     OBSOLETED = StatusBits.OBSOLETE | StatusBits.IN_NETWORK
 
