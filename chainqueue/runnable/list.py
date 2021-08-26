@@ -12,13 +12,7 @@ from chainlib.chain import ChainSpec
 from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
 
 # local imports
-from chainqueue.enum import (
-        StatusBits,
-        all_errors,
-        is_alive,
-        is_error_status,
-        status_str,
-        )
+from chainqueue.cli import Outputter
 
 
 logging.basicConfig(level=logging.WARNING)
@@ -61,6 +55,7 @@ if status_mask == None:
         not_status_mask = StatusBits.FINAL
 
 tx_getter = None
+tx_lister = None
 session_method = None
 if config.get('_BACKEND') == 'sql':
     from chainqueue.sql.query import get_account_tx as tx_lister
@@ -73,56 +68,6 @@ else:
     raise NotImplementedError('backend {} not implemented'.format(config.get('_BACKEND')))
 
 
-class Outputter:
-
-    def __init__(self, chain_spec, writer, session_method=None):
-        self.writer = writer
-        self.chain_spec = chain_spec
-        self.chain_spec_str = str(chain_spec)
-        self.session = None
-        if session_method != None:
-            self.session = session_method()
-        self.results = {
-            'pending_error': 0,
-            'final_error': 0,
-            'pending': 0,
-            'final': 0,
-                }
-
-    def __del__(self):
-        if self.session != None:
-            self.session.close()
-
-
-    def add(self, tx_hash):
-        tx = tx_getter(self.chain_spec, tx_hash, session=self.session)
-        category = None
-        if is_alive(tx['status_code']):
-            category = 'pending'
-        else:
-            category = 'final'
-        self.results[category] += 1
-        if is_error_status(tx['status_code']):
-            logg.debug('registered {} as {} with error'.format(tx_hash, category))
-            self.results[category + '_error'] += 1
-        else:
-            logg.debug('registered {} as {}'.format(tx_hash, category))
-     
-
-    def decode_summary(self):
-        self.writer.write('pending\t{}\t{}\n'.format(self.results['pending'], self.results['pending_error']))
-        self.writer.write('final\t{}\t{}\n'.format(self.results['final'], self.results['final_error']))
-        self.writer.write('total\t{}\t{}\n'.format(self.results['final'] + self.results['pending'], self.results['final_error'] + self.results['pending_error']))
-
-
-    def decode_single(self, tx_hash):
-        tx = tx_getter(self.chain_spec, tx_hash, session=self.session)
-        status = tx['status']
-        if config.get('_RAW'):
-            status = status_str(tx['status_code'], bits_only=True)
-        self.writer.write('{}\t{}\t{}\t{}\n'.format(self.chain_spec_str, add_0x(tx_hash), status, tx['status_code']))
-
-
 def main():
     since = config.get('_START', None)
     if since != None:
@@ -131,7 +76,7 @@ def main():
     if until != None:
         until = add_0x(until)
     txs = tx_lister(chain_spec, config.get('_ADDRESS'), since=since, until=until, status=status_mask, not_status=not_status_mask)
-    outputter = Outputter(chain_spec, sys.stdout, session_method=session_method)
+    outputter = Outputter(chain_spec, sys.stdout, tx_getter, session_method=session_method, decode_status=config.true('_RAW'))
     if config.get('_SUMMARY'):
         for k in txs.keys():
             outputter.add(k)
