@@ -5,9 +5,11 @@ import shutil
 import logging
 import os
 
+# external imports
+from leveldir.hex import HexDir
+
 # local imports
 from chainqueue.fs.queue import FsQueue
-from chainqueue.fs.dir import HexDir
 from chainqueue.enum import StatusBits
 
 logging.basicConfig(level=logging.DEBUG)

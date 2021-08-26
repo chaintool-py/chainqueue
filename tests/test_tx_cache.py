@@ -11,7 +11,7 @@ from chainqueue.sql.state import *
 from chainqueue.sql.query import get_tx_cache
 
 # test imports
-from tests.base import TestTxBase
+from tests.chainqueue_base import TestTxBase
 
 class TestTxCache(TestTxBase):
 

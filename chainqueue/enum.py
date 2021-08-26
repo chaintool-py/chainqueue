@@ -26,32 +26,14 @@ class StatusBits(enum.IntEnum):
 
 @enum.unique
 class StatusEnum(enum.IntEnum):
-    """
-
-    - Inactive, not finalized. (<0)
-        * PENDING: The initial state of a newly added transaction record. No action has been performed on this transaction yet.
-        * SENDFAIL: The transaction was not received by the node.
-        * RETRY: The transaction is queued for a new send attempt after previously failing.
-        * READYSEND: The transaction is queued for its first send attempt
-        * OBSOLETED: A new transaction with the same nonce and higher gas has been sent to network.
-        * WAITFORGAS: The transaction is on hold pending gas funding.
-    - Active state: (==0)
-        * SENT: The transaction has been sent to the mempool.
-    - Inactive, finalized. (>0)
-        * FUBAR: Unknown error occurred and transaction is abandoned. Manual intervention needed.
-        * CANCELLED: The transaction was sent, but was not mined and has disappered from the mempool. This usually follows a transaction being obsoleted.
-        * OVERRIDDEN: Transaction has been manually overriden.
-        * REJECTED: The transaction was rejected by the node.
-        * REVERTED: The transaction was mined, but exception occurred during EVM execution. (Block number will be set)
-        * SUCCESS: THe transaction was successfully mined. (Block number will be set)
-
+    """Semantic states intended for human consumption
     """
     PENDING = 0
 
     SENDFAIL = StatusBits.DEFERRED | StatusBits.LOCAL_ERROR
     RETRY = StatusBits.QUEUED | StatusBits.DEFERRED 
     READYSEND = StatusBits.QUEUED
-    RESERVED = StatusBits.QUEUED | StatusBits.RESERVED
+    RESERVED = StatusBits.RESERVED
 
     OBSOLETED = StatusBits.OBSOLETE | StatusBits.IN_NETWORK
 
@@ -105,6 +87,15 @@ def status_str(v, bits_only=False):
 
 
 def status_bytes(status=0):
+    """Serialize a status bit field integer value to bytes.
+   
+    if invoked without an argument, it will return the serialization of an empty state.
+
+    :param status: Status bit field
+    :type status: number
+    :returns: Serialized value
+    :rtype: bytes
+    """
     return status.to_bytes(8, byteorder='big')
 
 
@@ -116,6 +107,7 @@ def all_errors():
     """
     return StatusBits.LOCAL_ERROR | StatusBits.NODE_ERROR | StatusBits.NETWORK_ERROR | StatusBits.UNKNOWN_ERROR
 
+errors = all_errors()
 
 def is_error_status(v):
     """Check if value is an error state
@@ -130,10 +122,24 @@ def is_error_status(v):
 
 __ignore_manual_value = ~StatusBits.MANUAL
 def ignore_manual(v):
+    """Reset the MANUAL bit from the given status
+
+    :param v: Status bit field
+    :type v: number
+    :returns: Input state with manual bit removed
+    :rtype: number
+    """
     return v & __ignore_manual_value
 
 
 def is_nascent(v):
+    """Check if state is the empty state
+
+    :param v: Status bit field
+    :type v: number
+    :returns: True if empty
+    :rtype: bool
+    """
     return ignore_manual(v) == StatusEnum.PENDING
 
 
@@ -151,6 +157,9 @@ def is_alive(v):
 
     The contingency of "likely" refers to the case a transaction has been obsoleted after sent to the network, but the network still confirms the obsoleted transaction. The return value of this method will not change as a result of this, BUT the state itself will (as the FINAL bit will be set).
 
-    :returns: 
+    :param v: Status bit field
+    :type v: number
+    :returns: True if status is not yet finalized
+    :rtype: bool
     """
     return bool(v & dead() == 0)

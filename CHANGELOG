@@ -1,3 +1,7 @@
+- 0.0.3
+	* cli tool for listing queue by address
+	* ensure lowercase hex input in db
+	* exportable unittest utilities
 - 0.0.2
 	* add fs backend
 	* add flexible data directory

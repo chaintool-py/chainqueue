@@ -5,9 +5,11 @@ import shutil
 import logging
 import os
 
+# external imports
+from leveldir.hex import HexDir
+
 # local imports
 from chainqueue.fs.queue import FsQueue
-from chainqueue.fs.dir import HexDir
 from chainqueue.fs.entry import Entry
 from chainqueue.enum import StatusBits
 
@@ -30,9 +32,9 @@ class FsQueueEntryTest(unittest.TestCase):
 
 
     def test_entry(self):
-        tx_hash = os.urandom(32)
-        tx_content = os.urandom(128)
-        Entry(tx_hash, tx_content)
+        tx_hash = os.urandom(32).hex()
+        tx_content = os.urandom(128).hex()
+        Entry(0, tx_hash, tx_content)
 
 
 if __name__ == '__main__':

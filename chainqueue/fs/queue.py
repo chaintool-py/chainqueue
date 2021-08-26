@@ -14,7 +14,6 @@ logg = logging.getLogger(__name__)
 
 
 class FsQueueBackend:
-
     
     def add(self, label, content, prefix):
         raise NotImplementedError()
@@ -52,7 +51,7 @@ class FsQueue:
 
     def add(self, key, value):
         prefix = status_bytes()
-        c = self.backend.add(key, value, prefix=prefix)
+        (c, entry_location) = self.backend.add(key, value, prefix=prefix)
 
         key_hex = key.hex()
         entry_path = os.path.join(self.index_path, key_hex)
