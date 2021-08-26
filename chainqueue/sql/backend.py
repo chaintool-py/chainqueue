@@ -6,7 +6,11 @@ import urllib.error
 from sqlalchemy.exc import (
     IntegrityError,
     )
-from chainlib.error import JSONRPCException
+from chainlib.error import (
+        RPCException,
+        RPCNonceException,
+        DefaultErrorParser,
+        )
 from hexathon import (
         add_0x,
         strip_0x,
@@ -26,6 +30,7 @@ from chainqueue.sql.state import (
         set_reserved,
         set_sent,
         set_fubar,
+        set_rejected,
         )
 from chainqueue.sql.tx import cache_tx_dict
 
@@ -34,8 +39,11 @@ logg = logging.getLogger(__name__)
 
 class SQLBackend:
 
-    def __init__(self, conn_spec, *args, **kwargs):
+    def __init__(self, conn_spec, error_parser=None, *args, **kwargs):
         SessionBase.connect(conn_spec, pool_size=kwargs.get('poolsize', 0), debug=kwargs.get('debug', False))
+        if error_parser == None:
+            error_parser = DefaultErrorParser()
+        self.error_parser = error_parser
 
 
     def create(self, chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_predecessors=True, session=None):
@@ -71,7 +79,7 @@ class SQLBackend:
         fail = False
         r = 1
         try:
-            rpc.do(payload)
+            rpc.do(payload, error_parser=self.error_parser)
             r = 0
         except ConnectionError as e:
             logg.error('dispatch {} connection error {}'.format(tx_hash, e))
@@ -79,7 +87,11 @@ class SQLBackend:
         except urllib.error.URLError as e:
             logg.error('dispatch {} urllib error {}'.format(tx_hash, e))
             fail = True
-        except JSONRPCException as e:
+        except RPCNonceException as e:
+            logg.error('nonce error {} default {}'.format(tx_hash, e))
+            set_rejected(chain_spec, tx_hash, session=session)
+            return 1
+        except RPCException as e:
             logg.exception('error! {}'.format(e))
             set_fubar(chain_spec, tx_hash, session=session)
             raise e

@@ -189,10 +189,8 @@ class Otx(SessionBase):
             SessionBase.release_session(session)
             raise TxStateChangeError('REJECTED on tx that has not been RESERVED ({})'.format(status))
 
-
-
         self.__set_status(StatusBits.NODE_ERROR | StatusBits.FINAL, session)
-            
+        self.__reset_status(StatusBits.QUEUED | StatusBits.RESERVED, session)
         if self.tracing:
             self.__state_log(session=session)
 
@@ -221,7 +219,7 @@ class Otx(SessionBase):
         self.__set_status(StatusBits.OBSOLETE, session)
         if manual:
             self.manual(session=session)
-        self.__reset_status(StatusBits.QUEUED | StatusBits.IN_NETWORK, session)
+        self.__reset_status(StatusBits.QUEUED | StatusBits.IN_NETWORK | StatusBits.RESERVED, session)
 
         if self.tracing:
             self.__state_log(session=session)
