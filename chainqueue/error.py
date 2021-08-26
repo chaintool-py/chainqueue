@@ -1,4 +1,6 @@
 class ChainQueueException(Exception):
+    """Base class for chainqueue related exceptions
+    """
     pass
 
 

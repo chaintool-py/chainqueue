@@ -15,7 +15,7 @@ from chainqueue.db.enum import (
 from chainqueue.sql.state import *
 
 # test imports
-from tests.base import TestOtxBase
+from tests.chainqueue_base import TestOtxBase
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()

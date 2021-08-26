@@ -11,6 +11,7 @@ from sqlalchemy import func
 from hexathon import (
        add_0x,
        strip_0x,
+       uniform as hex_uniform,
        )
 
 # local imports
@@ -26,16 +27,21 @@ from chainqueue.db.enum import (
         )
 from chainqueue.error import (
         NotLocalTxError,
+        CacheIntegrityError,
         )
 
-logg = logging.getLogger().getChild(__name__)
+logg = logging.getLogger(__name__)
 
 
 def get_tx_cache(chain_spec, tx_hash, session=None):
     """Returns an aggregate dictionary of outgoing transaction data and metadata
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
     :returns: Transaction data
     :rtype: dict
@@ -81,8 +87,12 @@ def get_tx_cache(chain_spec, tx_hash, session=None):
 def get_tx(chain_spec, tx_hash, session=None):
     """Retrieve a transaction queue record by transaction hash
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
     :returns: nonce, address and signed_tx (raw signed transaction)
     :rtype: dict
@@ -107,26 +117,35 @@ def get_tx(chain_spec, tx_hash, session=None):
 def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
     """Retrieve all transactions for address with specified nonce
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param nonce: Nonce
     :type nonce: number
-    :param address: Ethereum address
-    :type address: str, 0x-hex
+    :param sender: Ethereum address
+    :type sender: str, 0x-hex
+    :param decoder: Transaction decoder
+    :type decoder: TODO - define transaction decoder
+    :param session: Backend state integrity session
+    :type session: varies
     :returns: Transactions
     :rtype: dict, with transaction hash as key, signed raw transaction as value
     """
+    sender = add_0x(hex_uniform(strip_0x(sender)))
+
     session = SessionBase.bind_session(session)
     q = session.query(Otx)
     q = q.join(TxCache)
     q = q.filter(TxCache.sender==sender)
     q = q.filter(Otx.nonce==nonce)
-   
+  
     txs = {}
     for r in q.all():
         tx_signed_bytes = bytes.fromhex(r.signed_tx)
         if decoder != None:
             tx = decoder(tx_signed_bytes, chain_spec)
-            if sender != None and tx['from'] != sender:
-                raise IntegrityError('Cache sender {} does not match sender in tx {} using decoder {}'.format(sender, r.tx_hash, str(decoder)))
+            tx_from = add_0x(hex_uniform(strip_0x(tx['from'])))
+            if sender != None and tx_from != sender:
+                raise CacheIntegrityError('Cache sender {} does not match sender {} in tx {} using decoder {}'.format(sender, tx_from, r.tx_hash, str(decoder)))
         txs[r.tx_hash] = r.signed_tx
 
     SessionBase.release_session(session)
@@ -137,12 +156,18 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
 def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, decoder=None):
     """Returns not finalized transactions that have been attempted sent without success.
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param status: If set, will return transactions with this local queue status only
     :type status: cic_eth.db.enum.StatusEnum
     :param recipient: Recipient address to return transactions for
     :type recipient: str, 0x-hex
     :param chain_id: Numeric chain id to use to parse signed transaction data
     :type chain_id: number
+    :param decoder: Transaction decoder
+    :type decoder: TODO - define transaction decoder
+    :param session: Backend state integrity session
+    :type session: varies
     :raises ValueError: Status is finalized, sent or never attempted sent
     :returns: Transactions
     :rtype: dict, with transaction hash as key, signed raw transaction as value
@@ -161,6 +186,7 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
         q = q.filter(not_(Otx.status.op('&')(StatusBits.IN_NETWORK.value)>0))
 
     if sender != None:
+        sender = add_0x(hex_uniform(strip_0x(sender)))
         q = q.filter(TxCache.sender==sender)
 
     txs = {}
@@ -170,8 +196,9 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
         tx_signed_bytes = bytes.fromhex(r.signed_tx)
         if decoder != None:
             tx = decoder(tx_signed_bytes, chain_spec)
-            if sender != None and tx['from'] != sender:
-                raise IntegrityError('Cache sender {} does not match sender in tx {} using decoder {}'.format(sender, r.tx_hash, str(decoder)))
+            tx_from = add_0x(hex_uniform(strip_0x(tx['from'])))
+            if sender != None and tx_from != sender:
+                raise CacheIntegrityError('Cache sender {} does not match sender {} in tx {} using decoder {}'.format(sender, tx_from, r.tx_hash, str(decoder)))
             gas += tx['gas'] * tx['gasPrice']
 
         txs[r.tx_hash] = r.signed_tx
@@ -184,12 +211,20 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
 def get_status_tx_cache(chain_spec, status, not_status=None, before=None, exact=False, limit=0, session=None, decoder=None):
     """Retrieve transaction with a specific queue status.
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param status: Status to match transactions with
     :type status: str
     :param before: If set, return only transactions older than the timestamp
-    :type status: datetime.dateTime
+    :type before: datetime.dateTime
+    :param exact: If set, will match exact status value. If not set, will match any of the status bits set
+    :type exact: bool
     :param limit: Limit amount of returned transactions
     :type limit: number
+    :param decoder: Transaction decoder
+    :type decoder: TODO - define transaction decoder
+    :param session: Backend state integrity session
+    :type session: varies
     :returns: Transactions
     :rtype: list of cic_eth.db.models.otx.Otx
     """
@@ -223,14 +258,22 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
 
     (TODO) Will not return any rows if LockEnum.SEND bit in Lock is set for zero address.
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param status: Defines the status used to filter as upcoming.
     :type status: cic_eth.db.enum.StatusEnum
+    :param not_status: Invalidates any matches matching one of the given bits
+    :type not_status: cic_eth.db.enum.StatusEnum
     :param recipient: Ethereum address of recipient to return transaction for
     :type recipient: str, 0x-hex
     :param before: Only return transactions if their modification date is older than the given timestamp
     :type before: datetime.datetime
-    :param chain_id: Chain id to use to parse signed transaction data
-    :type chain_id: number
+    :param limit: Limit amount of returned transactions
+    :type limit: number
+    :param decoder: Transaction decoder
+    :type decoder: TODO - define transaction decoder
+    :param session: Backend state integrity session
+    :type session: varies
     :raises ValueError: Status is finalized, sent or never attempted sent
     :returns: Transactions
     :rtype: dict, with transaction hash as key, signed raw transaction as value
@@ -285,7 +328,7 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
         q = q.filter(TxCache.otx_id==o.id)
         o = q.first()
 
-        o.date_checked = datetime.datetime.now()
+        o.date_checked = datetime.datetime.utcnow()
         session.add(o)
         session.commit()
 
@@ -298,17 +341,68 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
     return txs
 
 
-def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, counterpart=None, session=None):
+def sql_range_filter(session, criteria=None):
+    """Convert an arbitrary type to a sql query range
+
+    :param session: Backend state integrity session
+    :type session: varies
+    :param criteria: Range criteria
+    :type criteria: any
+    :raises NotLocalTxError: If criteria is string, transaction hash does not exist in backend
+    :rtype: tuple
+    :returns: type string identifier, value
+    """
+    boundary = None
+    
+    if criteria == None:
+        return None
+
+    if isinstance(criteria, str):
+        q = session.query(Otx)
+        q = q.filter(Otx.tx_hash==strip_0x(criteria))
+        r = q.first()
+        if r == None:
+            raise NotLocalTxError('unknown tx hash as bound criteria specified: {}'.format(criteria))
+        boundary = ('id', r.id,)
+    elif isinstance(criteria, int):
+        boundary = ('id', criteria,)
+    elif isinstance(criteria, datetime.datetime):
+        boundary = ('date', criteria,)   
+
+    return boundary
+
+
+def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, counterpart=None, since=None, until=None, status=None, not_status=None, status_target=None, session=None):
     """Returns all local queue transactions for a given Ethereum address
 
+    The since parameter effect depends on its type. Results are returned inclusive of the given parameter condition.
+
+    * str - transaction hash; all transactions added after the given hash
+    * int - all transactions after the given db insert id
+    * datetime.datetime - all transactions added since the given datetime
+
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param address: Ethereum address
     :type address: str, 0x-hex
     :param as_sender: If False, will omit transactions where address is sender
     :type as_sender: bool
-    :param as_sender: If False, will omit transactions where address is recipient
-    :type as_sender: bool
+    :param as_recipient: If False, will omit transactions where address is recipient
+    :type as_recipient: bool
     :param counterpart: Only return transactions where this Ethereum address is the other end of the transaction (not in use)
     :type counterpart: str, 0x-hex
+    :param since: Only include transactions submitted before this datetime
+    :type since: datetime
+    :param until: Only include transactions submitted before this datetime
+    :type until: datetime
+    :param status: Only include transactions where the given status bits are set
+    :type status: chainqueue.enum.StatusEnum
+    :param not_status: Only include transactions where the given status bits are not set
+    :type not_status: chainqueue.enum.StatusEnum
+    :param status_target: Only include transaction where the status argument is exact match
+    :type status_target: chainqueue.enum.StatusEnum
+    :param session: Backend state integrity session
+    :type session: varies
     :raises ValueError: If address is set to be neither sender nor recipient
     :returns: Transactions 
     :rtype: dict, with transaction hash as key, signed raw transaction as value
@@ -319,6 +413,15 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
     txs = {}
 
     session = SessionBase.bind_session(session)
+    address = add_0x(hex_uniform(strip_0x(address)))
+
+    try:
+        filter_offset = sql_range_filter(session, criteria=since)
+        filter_limit = sql_range_filter(session, criteria=until)
+    except NotLocalTxError as e:
+        logg.error('query build failed: {}'.format(e))
+        return {}
+
     q = session.query(Otx)
     q = q.join(TxCache)
     if as_sender and as_recipient:
@@ -327,7 +430,28 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
         q = q.filter(TxCache.sender==address)
     else:
         q = q.filter(TxCache.recipient==address)
-    q = q.order_by(Otx.nonce.asc(), Otx.date_created.asc()) 
+
+    if filter_offset != None:
+        if filter_offset[0] == 'id':
+            q = q.filter(Otx.id>=filter_offset[1])
+        elif filter_offset[0] == 'date':
+            q = q.filter(Otx.date_created>=filter_offset[1])
+
+    if filter_limit != None:
+        if filter_limit[0] == 'id':
+            q = q.filter(Otx.id<=filter_limit[1])
+        elif filter_limit[0] == 'date':
+            q = q.filter(Otx.date_created<=filter_limit[1])
+
+    if status != None:
+        if status_target == None:
+            status_target = status
+        q = q.filter(Otx.status.op('&')(status)==status_target)
+    
+    if not_status != None:
+        q = q.filter(Otx.status.op('&')(not_status)==0)
+
+    q = q.order_by(Otx.nonce.asc(), Otx.date_created.asc())
 
     results = q.all()
     for r in results:
@@ -342,6 +466,21 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
 
 
 def count_tx(chain_spec, address=None, status=None, status_target=None, session=None):
+    """
+    
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
+    :param address: Address to count transactions for
+    :type address: str
+    :param status: Status to count transactions for
+    :type status: chainqueue.enum.StatusEnum
+    :param status_target: If set, will match status argument exactly against the given value
+    :type status_target: chainqueue.enum.StatusEnum
+    :param session: Backend state integrity session
+    :type session: varies
+    :rtype: int
+    :returns: Transaction count
+    """
     session = SessionBase.bind_session(session)
     q = session.query(Otx.id)
     q = q.join(TxCache)

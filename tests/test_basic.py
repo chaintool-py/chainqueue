@@ -14,7 +14,7 @@ from chainqueue.db.models.otx import Otx
 from chainqueue.db.models.tx import TxCache
 
 # test imports
-from tests.base import TestBase
+from tests.chainqueue_base import TestBase
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()

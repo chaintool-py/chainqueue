@@ -1,11 +1,14 @@
 # standard imports
 import datetime
+import logging
 
 # external imports
 from hexathon import strip_0x
 
 # local imports
 from chainqueue.enum import StatusEnum
+
+logg = logging.getLogger(__name__)
 
 
 class DefaultApplier:
@@ -22,6 +25,7 @@ class Entry:
         self.signed_tx = strip_0x(signed_tx)
         self.status = StatusEnum.PENDING
 
+        self.applier = applier
         self.applier.add(bytes.fromhex(tx_hash), bytes.fromhex(signed_tx))
 
 

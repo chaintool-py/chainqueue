@@ -1,3 +1,7 @@
 __pycache__
 *.pyc
 *.sqlite
+build/
+dist/
+*.html
+*.egg-info/

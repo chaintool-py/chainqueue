@@ -71,7 +71,7 @@ class TxCache(SessionBase):
 
         Only manipulates object, does not transaction or commit to backend.
         """
-        self.date_checked = datetime.datetime.now()
+        self.date_checked = datetime.datetime.utcnow()
 
 
     @staticmethod

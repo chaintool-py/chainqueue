@@ -25,10 +25,14 @@ logg = logging.getLogger().getChild(__name__)
 def set_sent(chain_spec, tx_hash, fail=False, session=None):
     """Used to set the status after a send attempt
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
     :param fail: if True, will set a SENDFAIL status, otherwise a SENT status. (Default: False)
     :type fail: boolean
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
     :returns: True if tx is known, False otherwise
     :rtype: boolean
@@ -63,13 +67,21 @@ def set_sent(chain_spec, tx_hash, fail=False, session=None):
 def set_final(chain_spec, tx_hash, block=None, tx_index=None, fail=False, session=None):
     """Used to set the status of an incoming transaction result. 
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
     :param block: Block number if final status represents a confirmation on the network
     :type block: number
+    :param tx_index: Transaction index if final status represents a confirmation on the network
+    :type tx_index: number
     :param fail: if True, will set a SUCCESS status, otherwise a REVERTED status. (Default: False)
     :type fail: boolean
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
     """
     session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
@@ -112,11 +124,17 @@ def set_cancel(chain_spec, tx_hash, manual=False, session=None):
 
     Will set the state to CANCELLED or OVERRIDDEN
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
     :param manual: If set, status will be OVERRIDDEN. Otherwise CANCELLED.
     :type manual: boolean
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
     """
     session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
@@ -146,9 +164,15 @@ def set_rejected(chain_spec, tx_hash, session=None):
 
     Will set the state to REJECTED
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
     """
 
     session = SessionBase.bind_session(session)
@@ -171,9 +195,15 @@ def set_fubar(chain_spec, tx_hash, session=None):
 
     Will set the state to FUBAR
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
     """
 
     session = SessionBase.bind_session(session)
@@ -196,9 +226,15 @@ def set_manual(chain_spec, tx_hash, session=None):
 
     Will set the state to MANUAL
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
     """
 
     session = SessionBase.bind_session(session)
@@ -219,9 +255,15 @@ def set_manual(chain_spec, tx_hash, session=None):
 def set_ready(chain_spec, tx_hash, session=None):
     """Used to mark a transaction as ready to be sent to network
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
     """
     session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
@@ -242,6 +284,17 @@ def set_ready(chain_spec, tx_hash, session=None):
 
 
 def set_reserved(chain_spec, tx_hash, session=None):
+    """Used to mark a transaction as reserved by a worker for processing.
+
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
+    :param tx_hash: Transaction hash of record to modify
+    :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
+    :raises NotLocalTxError: If transaction not found in queue.
+    """
+
     session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
     if o == None:
@@ -263,9 +316,15 @@ def set_waitforgas(chain_spec, tx_hash, session=None):
 
     Will set the state to WAITFORGAS
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
     :param tx_hash: Transaction hash of record to modify
     :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
     :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
     """
     session = SessionBase.bind_session(session)
     o = Otx.load(tx_hash, session=session)
@@ -283,7 +342,18 @@ def set_waitforgas(chain_spec, tx_hash, session=None):
 
 
 def get_state_log(chain_spec, tx_hash, session=None):
+    """If state log is activated, retrieves all state log changes for the given transaction.
 
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
+    :param tx_hash: Transaction hash of record to modify
+    :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
+    :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: list
+    :returns: Log items
+    """
     logs = []
     
     session = SessionBase.bind_session(session)
@@ -302,6 +372,20 @@ def get_state_log(chain_spec, tx_hash, session=None):
 
 
 def obsolete_by_cache(chain_spec, tx_hash, final, session=None):
+    """Explicitly obsolete single transaction by transaction with same nonce.
+
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
+    :param tx_hash: Transaction hash of record to modify, in hex
+    :type tx_hash: str
+    :param final: Transaction hash superseding record, in hex
+    :type tx_hash: str
+    :param session: Backend state integrity session
+    :type session: varies
+    :raises TxStateChangeError: Transaction is not obsoletable
+    :rtype: str
+    :returns: Transaction hash, in hex
+    """
     session = SessionBase.bind_session(session)
 
     q = session.query(

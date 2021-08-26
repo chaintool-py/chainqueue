@@ -6,7 +6,7 @@ from chainqueue.db.models.otx import Otx
 from chainqueue.sql.state import *
 
 # test imports
-from tests.base import TestOtxBase
+from tests.chainqueue_base import TestOtxBase
 
 
 class TestOtxState(TestOtxBase):
