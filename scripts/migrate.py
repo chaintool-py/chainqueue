@@ -26,7 +26,7 @@ default_data_dir = os.path.join(xdg_data_dirs[0], 'chainqueue')
 default_config_dir = load_first_config('chainqueue')
 config_dir = os.environ.get('CONFINI_DIR', default_config_dir)
 
-argparser = argparse.ArgumentParser()
+argparser = argparse.ArgumentParser("Database migration tool for chainqueue")
 argparser.add_argument('-c', type=str, default=config_dir, help='config file')
 argparser.add_argument('--env-prefix', default=os.environ.get('CONFINI_ENV_PREFIX'), dest='env_prefix', type=str, help='environment prefix for variables to overwrite configuration')
 argparser.add_argument('--data-dir', dest='data_dir', type=str, default=default_data_dir, help='data directory')

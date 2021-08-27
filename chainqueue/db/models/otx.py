@@ -175,6 +175,7 @@ class Otx(SessionBase):
 
 
         self.__set_status(StatusBits.UNKNOWN_ERROR | StatusBits.FINAL, session)
+        self.__reset_status(StatusBits.QUEUED | StatusBits.RESERVED, session)
        
         if self.tracing:
             self.__state_log(session=session)
