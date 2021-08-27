@@ -489,8 +489,8 @@ def count_tx(chain_spec, sender=None, status=None, status_target=None, session=N
         if status_target == None:
             status_target = status
         q = q.filter(Otx.status.op('&')(status)==status_target)
-    if address != None:
-        q = q.filter(TxCache.sender==address)
+    if sender != None:
+        q = q.filter(TxCache.sender==sender)
     result = q.count()
     SessionBase.release_session(session)
     return result
