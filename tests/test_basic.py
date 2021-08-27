@@ -39,6 +39,7 @@ class TestBasic(TestBase):
         tx = add_0x(os.urandom(128).hex())
         nonce = 42
         otx = Otx(nonce, tx_hash, tx)
+        otx.block = 1024
         self.session.add(otx)
 
         alice = add_0x(os.urandom(20).hex())

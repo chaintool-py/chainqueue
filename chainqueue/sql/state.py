@@ -379,7 +379,7 @@ def obsolete_by_cache(chain_spec, tx_hash, final, session=None):
     :param tx_hash: Transaction hash of record to modify, in hex
     :type tx_hash: str
     :param final: Transaction hash superseding record, in hex
-    :type tx_hash: str
+    :type final: str
     :param session: Backend state integrity session
     :type session: varies
     :raises TxStateChangeError: Transaction is not obsoletable

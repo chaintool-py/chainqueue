@@ -1,3 +1,5 @@
+# TODO: this module could require better naming to discern what type of data the different methods return. Currently it's a mix of otx summary, otx objects, tx cache objects, tx representation dicts and hash/signedtx kv pairs
+
 # standard imports
 import logging
 import time
@@ -127,6 +129,7 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
     :type decoder: TODO - define transaction decoder
     :param session: Backend state integrity session
     :type session: varies
+    :raises CacheIntegrityError: Cached data does not match intepreted data.
     :returns: Transactions
     :rtype: dict, with transaction hash as key, signed raw transaction as value
     """
@@ -160,17 +163,15 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
     :type chain_spec: chainlib.chain.ChainSpec
     :param status: If set, will return transactions with this local queue status only
     :type status: cic_eth.db.enum.StatusEnum
-    :param recipient: Recipient address to return transactions for
-    :type recipient: str, 0x-hex
-    :param chain_id: Numeric chain id to use to parse signed transaction data
-    :type chain_id: number
-    :param decoder: Transaction decoder
-    :type decoder: TODO - define transaction decoder
+    :param sender: Sender address to return transactions for
+    :type sender: str
     :param session: Backend state integrity session
     :type session: varies
+    :param decoder: Transaction decoder
+    :type decoder: Function accepting signed transaction data as input
     :raises ValueError: Status is finalized, sent or never attempted sent
-    :returns: Transactions
-    :rtype: dict, with transaction hash as key, signed raw transaction as value
+    :returns: Key value pairs with transaction hash and signed raw transaction
+    :rtype: dict
     """
     session = SessionBase.bind_session(session)
     q = session.query(Otx)
@@ -465,13 +466,13 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
     return txs
 
 
-def count_tx(chain_spec, address=None, status=None, status_target=None, session=None):
-    """
+def count_tx(chain_spec, sender=None, status=None, status_target=None, session=None):
+    """Count transaction records matching the given criteria.
     
     :param chain_spec: Chain spec for transaction network
     :type chain_spec: chainlib.chain.ChainSpec
-    :param address: Address to count transactions for
-    :type address: str
+    :param sender: Sender address to count transactions for
+    :type sender: str
     :param status: Status to count transactions for
     :type status: chainqueue.enum.StatusEnum
     :param status_target: If set, will match status argument exactly against the given value

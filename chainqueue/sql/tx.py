@@ -38,6 +38,7 @@ def create(chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_prede
     :type obsolete_predecessors: bool
     :param session: Backend state integrity session
     :type session: varies
+    :raises TxStateChangeError: Transaction obsoletion failed
     :returns: transaction hash, in hex
     :rtype: str
     """

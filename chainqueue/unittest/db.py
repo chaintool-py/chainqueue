@@ -21,6 +21,11 @@ db_config = {
 
 
 class ChainQueueDb:
+    """SQLITE database setup for unit tests
+
+    :param debug: Activate sql level debug (outputs sql statements)
+    :type debug: bool
+    """
 
     base = SessionBase
 
@@ -48,8 +53,12 @@ class ChainQueueDb:
 
 
     def bind_session(self, session=None):
+        """Create session using underlying session base
+        """
         return self.base.bind_session(session)
 
     
     def release_session(self, session=None):
+        """Release session using underlying session base
+        """
         return self.base.release_session(session)
