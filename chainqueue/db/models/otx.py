@@ -28,8 +28,6 @@ class Otx(SessionBase):
 
     :param nonce: Transaction nonce
     :type nonce: number
-    :param address: Ethereum address of recipient - NOT IN USE, REMOVE
-    :type address: str
     :param tx_hash: Tranasction hash 
     :type tx_hash: str, 0x-hex
     :param signed_tx: Signed raw transaction data
@@ -41,12 +39,26 @@ class Otx(SessionBase):
     """Whether to enable queue state tracing"""
 
     nonce = Column(Integer)
+    """Transaction nonce"""
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
+    """Datetime when record was created"""
     date_updated = Column(DateTime, default=datetime.datetime.utcnow)
+    """Datetime when record was last updated"""
     tx_hash = Column(String(66))
+    """Tranasction hash"""
     signed_tx = Column(Text)
+    """Signed raw transaction data"""
     status = Column(Integer)
+    """The status bit field of the transaction"""
     block = Column(Integer)
+    """The block number in which the transaction has been included"""
+
+
+    def __init__(self, nonce, tx_hash, signed_tx):
+        self.nonce = nonce
+        self.tx_hash = strip_0x(tx_hash)
+        self.signed_tx = strip_0x(signed_tx)
+        self.status = StatusEnum.PENDING
 
 
     def __set_status(self, status, session):
@@ -85,6 +97,8 @@ class Otx(SessionBase):
 
         :param block: Block number
         :type block: number
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         session = SessionBase.bind_session(session)
@@ -105,6 +119,8 @@ class Otx(SessionBase):
 
         Only manipulates object, does not transaction or commit to backend.
 
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.GAS_ISSUES):
@@ -134,6 +150,10 @@ class Otx(SessionBase):
         """Marks transaction as "fubar." Any transaction marked this way is an anomaly and may be a symptom of a serious problem.
 
         Only manipulates object, does not transaction or commit to backend.
+
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
+        :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.UNKNOWN_ERROR):
             return
@@ -166,6 +186,10 @@ class Otx(SessionBase):
         """Marks transaction as "rejected," which means the node rejected sending the transaction to the network. The nonce has not been spent, and the transaction should be replaced.
 
         Only manipulates object, does not transaction or commit to backend.
+
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
+        :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.NODE_ERROR):
             return
@@ -201,6 +225,10 @@ class Otx(SessionBase):
         """Marks transaction as manually overridden.
 
         Only manipulates object, does not transaction or commit to backend.
+
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
+        :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
 
         session = SessionBase.bind_session(session)
@@ -228,9 +256,14 @@ class Otx(SessionBase):
 
 
     def manual(self, session=None):
+        """Marks transaction as having been manually overridden.
+
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
+        :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
+        """
 
         session = SessionBase.bind_session(session)
-
 
         if self.status & StatusBits.FINAL:
             status = status_str(self.status)
@@ -246,10 +279,10 @@ class Otx(SessionBase):
 
 
     def retry(self, session=None):
-        """Marks transaction as ready to retry after a timeout following a sendfail or a completed gas funding.
+        """Marks transaction as ready to retry after a timeout following a sendfail or a completed fee funding.
 
-        Only manipulates object, does not transaction or commit to backend.
-
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.QUEUED):
@@ -278,8 +311,8 @@ class Otx(SessionBase):
     def readysend(self, session=None):
         """Marks transaction as ready for initial send attempt.
 
-        Only manipulates object, does not transaction or commit to backend.
-
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.QUEUED):
@@ -308,8 +341,8 @@ class Otx(SessionBase):
     def sent(self, session=None):
         """Marks transaction as having been sent to network.
 
-        Only manipulates object, does not transaction or commit to backend.
-
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.IN_NETWORK):
@@ -339,8 +372,8 @@ class Otx(SessionBase):
     def sendfail(self, session=None):
         """Marks that an attempt to send the transaction to the network has failed.
 
-        Only manipulates object, does not transaction or commit to backend.
-
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.NODE_ERROR):
@@ -375,6 +408,8 @@ class Otx(SessionBase):
 
         Only manipulates object, does not transaction or commit to backend.
 
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.RESERVED):
@@ -412,6 +447,8 @@ class Otx(SessionBase):
 
         :param block: Block number transaction was mined in.
         :type block: number
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         if self.__status_already_set(StatusBits.NETWORK_ERROR):
@@ -448,6 +485,8 @@ class Otx(SessionBase):
 
         :param confirmed: Whether transition is to a final state.
         :type confirmed: bool
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
         session = SessionBase.bind_session(session)
@@ -480,6 +519,8 @@ class Otx(SessionBase):
 
         :param block: Block number transaction was mined in.
         :type block: number
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :raises cic_eth.db.error.TxStateChangeError: State change represents a sequence of events that should not exist.
         """
 
@@ -518,10 +559,13 @@ class Otx(SessionBase):
         :type status: cic_eth.db.enum.StatusEnum
         :param limit: Max results to return
         :type limit: number
-        :param status_exact: Whether or not to perform exact status match
-        :type bool:
+        :param status_exact: If false, records where status integer value is less than or equal to the argument will be returned
+        :type status_exact: bool
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
         :returns: List of transaction hashes
         :rtype: tuple, where first element is transaction hash
+        :todo: This approach is obsolete and this method may return unexpected results; the original status enum was organized so that higher status values matched state of processing towards final state. This is no longer the case.
         """
         e = None
 
@@ -542,6 +586,10 @@ class Otx(SessionBase):
 
         :param tx_hash: Transaction hash
         :type tx_hash: str, 0x-hex
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
+        :rtype: chainqueue.db.models.otx.Otx
+        :returns: Matching otx record
         """
         session = SessionBase.bind_session(session)
         
@@ -553,8 +601,6 @@ class Otx(SessionBase):
         return q.first()
 
 
-    
-
     def __state_log(self, session):
         l = OtxStateLog(self)
         session.add(l)
@@ -563,6 +609,19 @@ class Otx(SessionBase):
     # TODO: it is not safe to return otx here unless session has been passed in
     @staticmethod
     def add(nonce, tx_hash, signed_tx, session=None):
+        """Add a new otx record to database.
+
+        The resulting Otx object will only be returned if the database session is provided by the caller. Otherwise, the returnvalue of the method will be None.
+
+        :param tx_hash: Transaction hash, in hex
+        :type tx_hash: str
+        :param signed_tx: Signed transaction data, in hex
+        :type signed_tx: str
+        :param session: Sqlalchemy database session
+        :type session: sqlalchemy.orm.Session
+        :rtype: chainqueue.db.models.otx.Otx
+        :returns: Matching otx record
+        """
         external_session = session != None
 
         session = SessionBase.bind_session(session)
@@ -580,10 +639,3 @@ class Otx(SessionBase):
             return None
 
         return otx
-
-
-    def __init__(self, nonce, tx_hash, signed_tx):
-        self.nonce = nonce
-        self.tx_hash = strip_0x(tx_hash)
-        self.signed_tx = strip_0x(signed_tx)
-        self.status = StatusEnum.PENDING

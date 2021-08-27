@@ -7,21 +7,33 @@ class StatusBits(enum.IntEnum):
     """Individual bit flags that are combined to define the state and legacy of a queued transaction
 
     """
-    QUEUED = 0x01 # transaction should be sent to network
-    RESERVED = 0x02 # transaction is currently being handled by a thread
-    IN_NETWORK = 0x08 # transaction is in network
+    QUEUED = 0x01
+    """Transaction should be sent to network"""
+    RESERVED = 0x02
+    """Transaction is currently being handled by a thread"""
+    IN_NETWORK = 0x08
+    """Transaction is in network"""
    
-    DEFERRED = 0x10 # an attempt to send the transaction to network has failed
-    GAS_ISSUES = 0x20 # transaction is pending sender account gas funding
+    DEFERRED = 0x10
+    """An attempt to send the transaction to network has failed"""
+    GAS_ISSUES = 0x20
+    """Transaction is pending sender account fee funding"""
 
-    LOCAL_ERROR = 0x100 # errors that originate internally from the component
-    NODE_ERROR = 0x200 # errors originating in the node (invalid RLP input...)
-    NETWORK_ERROR = 0x400 # errors that originate from the network (REVERT)
-    UNKNOWN_ERROR = 0x800 # unclassified errors (the should not occur)
+    LOCAL_ERROR = 0x100
+    """Errors that originate internally from the component"""
+    NODE_ERROR = 0x200
+    """Errors originating in the node (e.g. invalid transaction wire format input...)"""
+    NETWORK_ERROR = 0x400
+    """Errors that originate from the network (REVERT)"""
+    UNKNOWN_ERROR = 0x800
+    """Unclassified errors (that should not occur)"""
 
-    FINAL = 0x1000 # transaction processing has completed
-    OBSOLETE = 0x2000 # transaction has been replaced by a different transaction with higher fee
-    MANUAL = 0x8000 # transaction processing has been manually overridden
+    FINAL = 0x1000
+    """Transaction processing has completed"""
+    OBSOLETE = 0x2000
+    """Transaction has been replaced by a different transaction (normally with higher fee)"""
+    MANUAL = 0x8000
+    """Transaction processing has been manually overridden"""
 
 
 @enum.unique
@@ -29,24 +41,38 @@ class StatusEnum(enum.IntEnum):
     """Semantic states intended for human consumption
     """
     PENDING = 0
+    """Transaction has been added but no processing has been performed"""
 
     SENDFAIL = StatusBits.DEFERRED | StatusBits.LOCAL_ERROR
+    """Temporary error occurred when sending transaction to node"""
     RETRY = StatusBits.QUEUED | StatusBits.DEFERRED 
+    """Transaction is ready to retry send to the network"""
     READYSEND = StatusBits.QUEUED
+    """Transaction is ready to be sent to network for first time"""
     RESERVED = StatusBits.RESERVED
+    """Transaction is currently being handled by a thread"""
 
     OBSOLETED = StatusBits.OBSOLETE | StatusBits.IN_NETWORK
+    """Transaction already in network has been replaced by a different transaction"""
 
     WAITFORGAS = StatusBits.GAS_ISSUES
+    """Transaction is pending sender account fee funding"""
 
     SENT = StatusBits.IN_NETWORK
+    """Transaction is in network"""
     FUBAR = StatusBits.FINAL | StatusBits.UNKNOWN_ERROR
+    """Transaction processing encountered an unknown error and will not be processed further"""
     CANCELLED = StatusBits.IN_NETWORK | StatusBits.FINAL | StatusBits.OBSOLETE
+    """A superseding transaction was confirmed by the network, and the current transaction will not be processed further"""
     OVERRIDDEN = StatusBits.FINAL | StatusBits.OBSOLETE | StatusBits.MANUAL
+    """A superseding transaction was manually added. The current transaction will not be sent to network nor processed further"""
 
     REJECTED = StatusBits.NODE_ERROR | StatusBits.FINAL
+    """A permanent error occurred when attempting to send transaction to node"""
     REVERTED = StatusBits.IN_NETWORK | StatusBits.FINAL | StatusBits.NETWORK_ERROR
+    """Execution of transaction on network completed and was unsuccessful."""
     SUCCESS = StatusBits.IN_NETWORK | StatusBits.FINAL 
+    """Execution of transaction on network completed and was successful"""
 
 
 def status_str(v, bits_only=False):
