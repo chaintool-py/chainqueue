@@ -54,13 +54,13 @@ class TxCache(SessionBase):
 
     otx_id = Column(Integer, ForeignKey('otx.id'))
     """Foreign key to chainqueue.db.models.otx.Otx"""
-    source_token_address = Column(String(42))
+    source_token_address = Column(String())
     """Contract address of token that sender spent from"""
-    destination_token_address = Column(String(42))
+    destination_token_address = Column(String())
     """Contract address of token that recipient will receive balance of"""
-    sender = Column(String(42))
+    sender = Column(String())
     """Ethereum address of transaction sender"""
-    recipient = Column(String(42))
+    recipient = Column(String())
     """Ethereum address of transaction beneficiary (e.g. token transfer recipient)"""
     from_value = Column(NUMERIC())
     """Amount of source tokens spent"""

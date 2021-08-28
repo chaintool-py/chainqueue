@@ -44,7 +44,7 @@ class Otx(SessionBase):
     """Datetime when record was created"""
     date_updated = Column(DateTime, default=datetime.datetime.utcnow)
     """Datetime when record was last updated"""
-    tx_hash = Column(String(66))
+    tx_hash = Column(String())
     """Tranasction hash"""
     signed_tx = Column(Text)
     """Signed raw transaction data"""

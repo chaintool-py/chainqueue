@@ -1,6 +1,7 @@
 # standard imports
 import logging
 import urllib.error
+import copy
 
 # external imports
 from sqlalchemy.exc import (
@@ -10,11 +11,6 @@ from chainlib.error import (
         RPCException,
         RPCNonceException,
         DefaultErrorParser,
-        )
-from hexathon import (
-        add_0x,
-        strip_0x,
-        uniform as hex_uniform,
         )
 
 # local imports
@@ -33,6 +29,7 @@ from chainqueue.sql.state import (
         set_rejected,
         )
 from chainqueue.sql.tx import cache_tx_dict
+from chainqueue.encode import TxHexNormalize
 
 logg = logging.getLogger(__name__)
 
@@ -52,12 +49,15 @@ class SQLBackend:
     """
 
     #def __init__(self, conn_spec, error_parser=None, *args, **kwargs):
-    def __init__(self, conn_spec, error_parser=None, pool_size=0, debug=False, *args, **kwargs):
+    def __init__(self, conn_spec, tx_normalizer=None, error_parser=None, pool_size=0, debug=False, *args, **kwargs):
         #SessionBase.connect(conn_spec, pool_size=kwargs.get('poolsize', 0), debug=kwargs.get('debug', False))
         SessionBase.connect(conn_spec, pool_size=pool_size, debug=debug)
         if error_parser == None:
             error_parser = DefaultErrorParser()
         self.error_parser = error_parser
+        if tx_normalizer == None:
+            tx_normalizer = TxHexNormalize()
+        self.tx_normalizer = tx_normalizer
 
 
     def create(self, chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_predecessors=True, session=None):
@@ -82,6 +82,8 @@ class SQLBackend:
         :rtype: int
         :returns: 0 if successfully added
         """
+        tx_hash = self.tx_normalizer.tx_hash(tx_hash)
+        signed_tx = self.tx_normalizer.tx_wire(signed_tx)
         try:
             queue_create(chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_predecessors=True, session=session)
         except IntegrityError as e:
@@ -101,8 +103,15 @@ class SQLBackend:
         :rtype: int
         :returns: 0 if successful
         """
-        (tx, txc_id) = cache_tx_dict(tx, session=session)
-        logg.debug('cached {} db insert id {}'.format(tx, txc_id))
+        ntx = copy.copy(tx)
+        ntx['hash'] = self.tx_normalizer.tx_hash(ntx['hash'])
+        ntx['from'] = self.tx_normalizer.wallet_address(ntx['from'])
+        ntx['to'] = self.tx_normalizer.wallet_address(ntx['to'])
+        ntx['source_token'] = self.tx_normalizer.executable_address(ntx['source_token'])
+        ntx['destination_token'] = self.tx_normalizer.executable_address(ntx['destination_token'])
+
+        (tx_dict, txc_id) = cache_tx_dict(ntx, session=session)
+        logg.debug('cached {} db insert id {}'.format(tx_dict, txc_id))
         return 0
 
 
@@ -120,6 +129,7 @@ class SQLBackend:
         :rtype: dict
         :returns: otx record summary
         """
+        tx_hash = self.tx_normalizer.tx_hash(tx_hash)
         return backend_get_tx(chain_spec, tx_hash, session=session)
 
 
@@ -170,6 +180,7 @@ class SQLBackend:
         :rtype: int
         :returns: 0 if no error
         """
+        tx_hash = self.tx_normalizer.tx_hash(tx_hash)
         set_reserved(chain_spec, tx_hash, session=session)
         fail = False
         r = 1

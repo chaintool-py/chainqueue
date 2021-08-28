@@ -1,6 +1,5 @@
 # standard imports
 import logging
-import copy
 
 # external imports
 from hexathon import (
@@ -95,24 +94,14 @@ def cache_tx_dict(tx_dict, session=None):
     """
     session = SessionBase.bind_session(session)
 
-    ntx = copy.copy(tx_dict)
-    for k in [
-        'hash',
-        'from',
-        'to',
-        'source_token',
-        'destination_token',
-        ]:
-        ntx[k] = add_0x(hex_uniform(strip_0x(ntx[k])))
-
     txc = TxCache(
-        ntx['hash'],
-        ntx['from'],
-        ntx['to'],
-        ntx['source_token'],
-        ntx['destination_token'],
-        ntx['from_value'],
-        ntx['to_value'],
+        tx_dict['hash'],
+        tx_dict['from'],
+        tx_dict['to'],
+        tx_dict['source_token'],
+        tx_dict['destination_token'],
+        tx_dict['from_value'],
+        tx_dict['to_value'],
         session=session
         )
     
@@ -123,4 +112,4 @@ def cache_tx_dict(tx_dict, session=None):
 
     SessionBase.release_session(session)
 
-    return (ntx, insert_id)
+    return (tx_dict, insert_id)
