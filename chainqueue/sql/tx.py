@@ -43,9 +43,6 @@ def create(chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_prede
     """
     session = SessionBase.bind_session(session)
 
-    holder_address = holder_address.lower()
-    tx_hash = tx_hash.lower()
-    signed_tx = signed_tx.lower()
     o = Otx.add(
             nonce=nonce,
             tx_hash=tx_hash,

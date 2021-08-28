@@ -133,8 +133,6 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
     :returns: Transactions
     :rtype: dict, with transaction hash as key, signed raw transaction as value
     """
-    sender = add_0x(hex_uniform(strip_0x(sender)))
-
     session = SessionBase.bind_session(session)
     q = session.query(Otx)
     q = q.join(TxCache)
@@ -146,7 +144,7 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
         tx_signed_bytes = bytes.fromhex(r.signed_tx)
         if decoder != None:
             tx = decoder(tx_signed_bytes, chain_spec)
-            tx_from = add_0x(hex_uniform(strip_0x(tx['from'])))
+            tx_from = tx['from']
             if sender != None and tx_from != sender:
                 raise CacheIntegrityError('Cache sender {} does not match sender {} in tx {} using decoder {}'.format(sender, tx_from, r.tx_hash, str(decoder)))
         txs[r.tx_hash] = r.signed_tx
@@ -187,7 +185,6 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
         q = q.filter(not_(Otx.status.op('&')(StatusBits.IN_NETWORK.value)>0))
 
     if sender != None:
-        sender = add_0x(hex_uniform(strip_0x(sender)))
         q = q.filter(TxCache.sender==sender)
 
     txs = {}
@@ -197,7 +194,8 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
         tx_signed_bytes = bytes.fromhex(r.signed_tx)
         if decoder != None:
             tx = decoder(tx_signed_bytes, chain_spec)
-            tx_from = add_0x(hex_uniform(strip_0x(tx['from'])))
+            #tx_from = add_0x(hex_uniform(strip_0x(tx['from'])))
+            tx_from = tx['from']
             if sender != None and tx_from != sender:
                 raise CacheIntegrityError('Cache sender {} does not match sender {} in tx {} using decoder {}'.format(sender, tx_from, r.tx_hash, str(decoder)))
             gas += tx['gas'] * tx['gasPrice']
@@ -414,7 +412,6 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
     txs = {}
 
     session = SessionBase.bind_session(session)
-    address = add_0x(hex_uniform(strip_0x(address)))
 
     try:
         filter_offset = sql_range_filter(session, criteria=since)
