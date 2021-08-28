@@ -14,7 +14,7 @@ This consists of the data required to order transactions, and to actually them t
 @item @strong{hash} of the transaction
 @item the serialized transaction @strong{payload}
 @item the transaction @strong{nonce} 
-@item the @xref{chainqueue-states, queue state}
+@item the queue state. @xref{chainqueue-states, queue state}
 @item the @strong{block number} of a confirmed transaction
 @end itemize
 
@@ -23,7 +23,8 @@ This consists of the data required to order transactions, and to actually them t
 
 With exception of the @emph{nonce}, the @emph{cache} part of the record contains deserialized fields of the transaction, all of which can be reconstructed by the client code intepreting the transaction payload in the @emph{mandatory} part.
 
-The queue can still work without the cache record, but keeping one enables conditional ordering and execution, e.g. @emph{@guillemetleft{}the first unsent transaction nonce from sender S.@guillemetright{}}
+The primary purpose of the @emph{cache} record is performance improvement. By keeping cached records of the expanded and interpreted properties of a transaction, fewer cycles need to be spent later on when needing to access these derived properties.
+
+Keeping the cache also more easily enables conditional ordering and execution when querying data sets, e.g. @emph{@guillemetleft{}the first unsent transaction nonce from sender S.@guillemetright{}}
 
 Additionally, the cache records curates some additional token semantics, defining in essence a transaction as @emph{@guillemetleft{}sender S sends X amount of token A as Y amount of token B to recipient R@guillemetright{}}.
-
