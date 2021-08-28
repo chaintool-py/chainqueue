@@ -29,7 +29,7 @@ from chainqueue.sql.state import (
         set_rejected,
         )
 from chainqueue.sql.tx import cache_tx_dict
-from chainqueue.encode import TxHexNormalize
+from chainqueue.encode import TxHexNormalizer
 
 logg = logging.getLogger(__name__)
 
@@ -39,6 +39,8 @@ class SQLBackend:
 
     :param conn_spec: Backend-dependent connection specification string. See chainqueue.db.models.base.SessionBase.connect
     :type conn_spec: str
+    :param tx_normalizer: Transaction data normalizer
+    :type tx_normalizer: Object implementing chainqueue.encode.TxHexNormalizer interface
     :param error_parser: Error parser to use for RPC calls within the backend component
     :type error_parser: Object implementing chainlib.error.DefaultErrorParser
     :param pool_size: Connection pool size for pool-capable sql engines. See chainqueue.db.models.base.SessionBase.connect
@@ -47,16 +49,13 @@ class SQLBackend:
     :type debug: bool
     :todo: define a backend abstract interface class
     """
-
-    #def __init__(self, conn_spec, error_parser=None, *args, **kwargs):
     def __init__(self, conn_spec, tx_normalizer=None, error_parser=None, pool_size=0, debug=False, *args, **kwargs):
-        #SessionBase.connect(conn_spec, pool_size=kwargs.get('poolsize', 0), debug=kwargs.get('debug', False))
         SessionBase.connect(conn_spec, pool_size=pool_size, debug=debug)
         if error_parser == None:
             error_parser = DefaultErrorParser()
         self.error_parser = error_parser
         if tx_normalizer == None:
-            tx_normalizer = TxHexNormalize()
+            tx_normalizer = TxHexNormalizer()
         self.tx_normalizer = tx_normalizer
 
 

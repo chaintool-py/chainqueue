@@ -8,30 +8,30 @@ from hexathon import (
         uniform as hex_uniform,
         )
 
-logg = logging.getLogger(__name__)
+logg = logging.getLogger()
 
 
-class TxHexNormalize:
+class TxHexNormalizer:
 
     def tx_hash(self, tx_hash):
-        return self.__hex_normalize(tx_hash)
+        return self.__hex_normalize(tx_hash, 'tx hash')
 
 
     def tx_wire(self, tx_wire):
-        return self.__hex_normalize(tx_wire)
+        return self.__hex_normalize(tx_wire, 'tx wire')
 
 
     def wallet_address(self, address):
-        return self.__hex_normalize(address)
+        return self.__hex_normalize(address, 'wallet address')
 
 
     def executable_address(self, address):
-        return self.__hex_normalize(address)
+        return self.__hex_normalize(address, 'executable address')
 
 
-    def __hex_normalize(self, data):
+    def __hex_normalize(self, data, context):
         r = add_0x(hex_uniform(strip_0x(data)))
-        logg.debug('tx hex normalize {} -> {}'.format(data, r))
+        logg.debug('normalize {} {} -> {}'.format(context, data, r))
         return r
 
 
