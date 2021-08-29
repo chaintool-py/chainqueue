@@ -4,3 +4,5 @@
 
 @include tx.texi
 @include state.texi
+@include stack.texi
+@include exec.texi

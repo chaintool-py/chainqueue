@@ -1,0 +1,6 @@
+@node chainqueue-executable
+@section Executables
+
+Chainqueue only provides a single executable. This executable lists items in queue based on given criteria. The available criteria more or less map to the arguments offered by @code{chainqueue.backend.Backend.get}.
+
+When installing @code{chainqueue} as a python package, the list tool will be available in @code{PATH} as the command @file{chainqueue-list}.

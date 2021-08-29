@@ -1,0 +1,58 @@
+@node chainqueue-architecture
+@section State storage
+
+Chainqueue enables separate implementations of the state storage layer backend.
+
+Included in the package are state storage for sql using the SQLAlchemy dependency, as well as state using native filesystem backend (without any additional dependencies).
+
+The backend interface is defined in the @code{chainqueue.backend} module. It provides the following methods:
+
+@itemize
+@item Create a new queue item
+@item Add cached data to queue item
+@item Get a single queue item
+@item Get multiple queue items based on given criteria
+@item Dispatch a queue item to the network
+@item Connect / disconnect to backend
+@end itemize
+
+
+@subsection SQL backend
+
+This backend is Contained in the module @code{chainqueue.sql.backend.SQLBackend}. It translates high-level calls to invididual method calls in the query, state and tx submodules of @code{chainqueue.sql.backend}.
+
+The @code{SQLBackend} object should provide all methods required to make practical use of the chainqueue package. However, all other modules in @code{chainqueue.sql} are also intended for public consumption.
+
+The @code{chainqueue.sql.backend} in turn calls methods in the SQLAlchemy database model layer in @code{chainqueue.db.models}. The consumer is not intended to interface directly with @code{chainqueue.db.models}.
+
+
+@subsection Filesystem backend
+
+The filesystem state storage is provided by the @code{chainqueue.fs} module. is at the moment missing the @code{chainqueue.backend.Backend} implementation. Please refer to the code in @file{tests/tests_fs*.py} to learn how to use in its current state.
+
+
+@section Adapters
+
+The adapter layer enables chain specific code to be combined with an arbitrary storage backend. Typically, chain specific code is required to:
+
+@itemize
+@item Translate transaction wire format to generic transaction representation
+@item Send transactions to the network
+@end itemize
+
+The adapter consumes a backend, and delegates calls to it as required.
+
+Since adapters are chain specific, @code{chainqueue} only provides a base class that must be extended the chain implementer code. Specifically, the methods to extend are:
+
+@table @code
+@item Add
+Add a transaction to the queue
+@item Upcoming
+Get queued transactions ready to be sent to network
+@item Dispatch
+Send a queued transaction to the network
+@item Translate
+Decode details of a transaction
+@item Create_session, release_session
+Session management to control queue state integrity
+@end table
