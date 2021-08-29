@@ -18,7 +18,7 @@ Transaction is assigned to a process which will send it to the network.
 @item IN_NETWORK
 The transaction has been sent to the network.
 @item DEFERRED
-A transaction send could not be completed, and should be retired later.
+A transaction send could not be completed, and should be retried later.
 @item GAS_ISSUES
 The transaction sender does not have sufficient network token balance to send the transaction.
 @item LOCAL_ERROR
