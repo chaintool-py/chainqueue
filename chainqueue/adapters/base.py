@@ -54,6 +54,19 @@ class Adapter:
         raise NotImplementedError()
 
 
+    def get(self, tx_hash, chain_spec, session=None):
+        """Retrieve serialized transaction represented by the given transaction hash.
+
+        :param chain_spec: Chain spec to use for transaction decode
+        :type chain_spec: chainlib.chain.ChainSpec
+        :param tx_hash: Transaction hash, in hex
+        :type tx_hash: str
+        :param session: Backend state integrity session
+        :type session: varies
+        """
+        raise NotImplementedError()
+
+
     def dispatch(self, chain_spec, rpc, tx_hash, signed_tx, session=None):
         """Send a queued transaction to the network.
 

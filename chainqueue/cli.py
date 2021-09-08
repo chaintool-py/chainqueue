@@ -1,5 +1,6 @@
 # standard imports
 import logging
+import enum
 
 # external imports
 from hexathon import add_0x
@@ -14,6 +15,13 @@ from chainqueue.enum import (
         )
 
 logg = logging.getLogger(__name__)
+
+
+class OutputCol(enum.Enum):
+    chainspec = 0
+    hash = 1
+    statustext = 2
+    statuscode = 3
 
 
 class Outputter:
@@ -31,7 +39,14 @@ class Outputter:
     :type decode_status: bool
     """
 
-    def __init__(self, chain_spec, writer, getter, session_method=None, decode_status=True):
+    all_cols = [
+            OutputCol.chainspec,
+            OutputCol.hash,
+            OutputCol.statustext,
+            OutputCol.statuscode,
+            ]
+
+    def __init__(self, chain_spec, writer, getter, session_method=None, decode_status=True, cols=None):
         self.decode_status = decode_status
         self.writer = writer
         self.getter = getter
@@ -46,6 +61,19 @@ class Outputter:
             'pending': 0,
             'final': 0,
                 }
+
+        debug_col_name = []
+        if cols == None:
+            self.cols = Outputter.all_cols
+        else:
+            self.cols = []
+            for col in cols:
+                v = getattr(OutputCol, col)
+                self.cols.append(v) 
+
+        for col in self.cols:
+            debug_col_name.append(col.name)
+        logg.debug('outputter initialized with cols: {}'.format(','.join(debug_col_name)))
 
 
     def __del__(self):
@@ -97,4 +125,21 @@ class Outputter:
         status = tx['status']
         if self.decode_status:
             status = status_str(tx['status_code'], bits_only=True)
-        self.writer.write('{}\t{}\t{}\t{}\n'.format(self.chain_spec_str, add_0x(tx_hash), status, tx['status_code']))
+        #self.writer.write('{}\t{}\t{}\t{}\n'.format(self.chain_spec_str, add_0x(tx_hash), status, tx['status_code']))
+        vals = [
+            self.chain_spec_str,
+            add_0x(tx_hash),
+            status,
+            str(tx['status_code']),
+            ]
+
+        i = 0
+        l = len(self.cols)
+        for col in self.cols:
+            self.writer.write(vals[col.value])
+            i += 1
+            if i == l:
+                self.writer.write('\n')
+            else:
+                self.writer.write('\t')
+        #self.writer.write('{}\t{}\t{}\t{}\n'.format()
