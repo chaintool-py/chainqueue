@@ -22,6 +22,7 @@ class OutputCol(enum.Enum):
     hash = 1
     statustext = 2
     statuscode = 3
+    signedtx = 4
 
 
 class Outputter:
@@ -40,6 +41,13 @@ class Outputter:
     """
 
     all_cols = [
+            OutputCol.chainspec,
+            OutputCol.hash,
+            OutputCol.signedtx,
+            OutputCol.statustext,
+            OutputCol.statuscode,
+            ]
+    default_cols = [
             OutputCol.chainspec,
             OutputCol.hash,
             OutputCol.statustext,
@@ -64,7 +72,7 @@ class Outputter:
 
         debug_col_name = []
         if cols == None:
-            self.cols = Outputter.all_cols
+            self.cols = Outputter.default_cols
         else:
             self.cols = []
             for col in cols:
@@ -125,12 +133,13 @@ class Outputter:
         status = tx['status']
         if self.decode_status:
             status = status_str(tx['status_code'], bits_only=True)
-        #self.writer.write('{}\t{}\t{}\t{}\n'.format(self.chain_spec_str, add_0x(tx_hash), status, tx['status_code']))
+
         vals = [
             self.chain_spec_str,
             add_0x(tx_hash),
             status,
             str(tx['status_code']),
+            add_0x(tx['signed_tx']),
             ]
 
         i = 0
@@ -142,4 +151,3 @@ class Outputter:
                 self.writer.write('\n')
             else:
                 self.writer.write('\t')
-        #self.writer.write('{}\t{}\t{}\t{}\n'.format()

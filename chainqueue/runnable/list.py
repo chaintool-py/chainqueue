@@ -30,6 +30,7 @@ argparser.add_argument('--error', action='store_true', help='Only show transacti
 argparser.add_argument('--pending', action='store_true', help='Omit finalized transactions')
 argparser.add_argument('--status-mask', type=int, dest='status_mask', help='Manually specify status bitmask value to match (overrides --error and --pending)')
 argparser.add_argument('--summary', action='store_true', help='output summary for each status category')
+argparser.add_argument('-o', '--column', dest='column', action='append', type=str, help='add a column to display')
 argparser.add_positional('address', type=str, help='Ethereum address of recipient')
 args = argparser.parse_args()
 extra_args = {
@@ -40,6 +41,7 @@ extra_args = {
     'error': None,
     'pending': None,
     'status_mask': None,
+    'column': None,
     'summary': None,
         }
 config = chainlib.cli.Config.from_args(args, arg_flags, extra_args=extra_args, base_config_dir=config_dir)
@@ -67,6 +69,8 @@ if config.get('_BACKEND') == 'sql':
 else:
     raise NotImplementedError('backend {} not implemented'.format(config.get('_BACKEND')))
 
+output_cols = config.get('_COLUMN')
+
 
 def main():
     since = config.get('_START', None)
@@ -76,7 +80,7 @@ def main():
     if until != None:
         until = add_0x(until)
     txs = tx_lister(chain_spec, config.get('_ADDRESS'), since=since, until=until, status=status_mask, not_status=not_status_mask)
-    outputter = Outputter(chain_spec, sys.stdout, tx_getter, session_method=session_method, decode_status=config.true('_RAW'))
+    outputter = Outputter(chain_spec, sys.stdout, tx_getter, session_method=session_method, decode_status=config.true('_RAW'), cols=output_cols)
     if config.get('_SUMMARY'):
         for k in txs.keys():
             outputter.add(k)
