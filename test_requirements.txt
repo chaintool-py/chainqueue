@@ -1,1 +1,1 @@
-chainlib==0.0.3rc2
+chainlib==0.0.9a10
