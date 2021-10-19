@@ -2,7 +2,9 @@
 
 set +e
 set +x
-export PYTHONPATH={$PYTHONPATH:-.}
+default_pythonpath=$PYTHONPATH:.
+export PYTHONPATH=${default_pythonpath:-.}
+>&2 echo using pythonpath $PYTHONPATH
 for f in `ls tests/*.py`; do
 	python $f
 	if [ $? -gt 0 ]; then
