@@ -227,7 +227,7 @@ class TestTxQuery(TestTxBase):
         self.session.commit()
 
         self.assertEqual(count_tx(self.chain_spec, status=StatusBits.IN_NETWORK | StatusBits.FINAL, status_target=StatusBits.IN_NETWORK), 2)
-        self.assertEqual(count_tx(self.chain_spec, address=self.alice, status=StatusBits.IN_NETWORK | StatusBits.FINAL, status_target=StatusBits.IN_NETWORK), 1)
+        self.assertEqual(count_tx(self.chain_spec, sender=self.alice, status=StatusBits.IN_NETWORK | StatusBits.FINAL, status_target=StatusBits.IN_NETWORK), 1)
 
 
     def test_account_tx(self):
