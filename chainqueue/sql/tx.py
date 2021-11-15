@@ -17,7 +17,8 @@ from chainqueue.db.enum import (
         )
 from chainqueue.error import TxStateChangeError
 
-logg = logging.getLogger().getChild(__name__)
+#logg = logging.getLogger(__name__)
+logg = logging.getLogger()
 
 
 def create(chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_predecessors=True, session=None):
