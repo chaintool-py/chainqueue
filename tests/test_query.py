@@ -345,6 +345,65 @@ class TestTxQuery(TestTxBase):
         txs = get_account_tx(self.chain_spec, self.alice, as_sender=True, as_recipient=False, not_status=StatusBits.QUEUED, status=StatusBits.IN_NETWORK, session=self.session)
         self.assertEqual(len(txs.keys()), 1)
 
+    def test_latest_txs(self):
+
+        nonce_hashes = [self.tx_hash]
+        tx_hash = add_0x(os.urandom(32).hex())
+        signed_tx = add_0x(os.urandom(128).hex())
+        create(
+                self.chain_spec,
+                42,
+                self.alice,
+                tx_hash,
+                signed_tx,
+                session=self.session,
+                )
+        txc = TxCache(
+                tx_hash,
+                self.alice,
+                self.bob,
+                self.foo_token,
+                self.bar_token,
+                self.from_value,
+                self.to_value,
+                session=self.session,
+                )
+        self.session.add(txc)
+        self.session.commit()
+
+        nonce_hashes.append(tx_hash)
+
+        time_between = datetime.datetime.utcnow()
+
+        tx_hash = add_0x(os.urandom(32).hex())
+        signed_tx = add_0x(os.urandom(128).hex())
+        create(
+                self.chain_spec,
+                41,
+                self.alice,
+                tx_hash,
+                signed_tx,
+                session=self.session,
+                )
+        txc = TxCache(
+                tx_hash,
+                self.alice,
+                self.bob,
+                self.foo_token,
+                self.bar_token,
+                self.from_value,
+                self.to_value,
+                session=self.session,
+                )
+        self.session.add(txc)
+
+        nonce_hashes.append(tx_hash)
+
+        txs = get_latest_txs(self.chain_spec, session=self.session)
+        self.assertEqual(len(txs.keys()), 3)
+         
+        txs = get_latest_txs(self.chain_spec, count=1, session=self.session)
+        self.assertEqual(len(txs.keys()), 1)
 
 if __name__ == '__main__':
     unittest.main()

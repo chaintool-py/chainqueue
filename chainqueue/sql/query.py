@@ -462,6 +462,70 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
 
     return txs
 
+def get_latest_txs(chain_spec,  count=10, since=None, until=None, status=None, not_status=None, status_target=None, session=None):
+    """Returns the lastest local queue transactions
+
+    The since parameter effect depends on its type. Results are returned inclusive of the given parameter condition.
+
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
+    :param status: Only include transactions where the given status bits are set
+    :type status: chainqueue.enum.StatusEnum
+    :param not_status: Only include transactions where the given status bits are not set
+    :type not_status: chainqueue.enum.StatusEnum
+    :param status_target: Only include transaction where the status argument is exact match
+    :type status_target: chainqueue.enum.StatusEnum
+    :param session: Backend state integrity session
+    :type session: varies
+    :raises ValueError: If address is set to be neither sender nor recipient
+    :returns: Transactions 
+    :rtype: dict, with transaction hash as key, signed raw transaction as value
+    """
+    txs = {}
+
+    session = SessionBase.bind_session(session)
+
+    try:
+        filter_offset = sql_range_filter(session, criteria=since)
+        filter_limit = sql_range_filter(session, criteria=until)
+    except NotLocalTxError as e:
+        logg.error('query build failed: {}'.format(e))
+        return {}
+
+    q = session.query(Otx)
+    q = q.join(TxCache)
+
+    if filter_offset != None:
+        if filter_offset[0] == 'id':
+            q = q.filter(Otx.id>=filter_offset[1])
+        elif filter_offset[0] == 'date':
+            q = q.filter(Otx.date_created>=filter_offset[1])
+
+    if filter_limit != None:
+        if filter_limit[0] == 'id':
+            q = q.filter(Otx.id<=filter_limit[1])
+        elif filter_limit[0] == 'date':
+            q = q.filter(Otx.date_created<=filter_limit[1])
+
+    if status != None:
+        if status_target == None:
+            status_target = status
+        q = q.filter(Otx.status.op('&')(status)==status_target)
+    
+    if not_status != None:
+        q = q.filter(Otx.status.op('&')(not_status)==0)
+
+    q = q.order_by(Otx.nonce.asc(), Otx.date_created.asc()).limit(count)
+    results = q.all()
+    for r in results:
+        if txs.get(r.tx_hash) != None:
+            logg.debug('tx {} already recorded'.format(r.tx_hash))
+            continue
+        txs[r.tx_hash] = r.signed_tx
+
+    SessionBase.release_session(session)
+
+    return txs
 
 def count_tx(chain_spec, sender=None, status=None, status_target=None, session=None):
     """Count transaction records matching the given criteria.
