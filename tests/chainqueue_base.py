@@ -66,16 +66,17 @@ class TestTxBase(TestOtxBase):
         self.to_value = 13
 
         backend = SQLBackend(self.db.dsn)
-        tx = {
-            'hash': self.tx_hash,
-            'from': self.alice,
-            'to': self.bob,
-            'source_token': self.foo_token,
-            'destination_token': self.bar_token,
-            'from_value': self.from_value,
-            'to_value': self.to_value,
-                }
-        backend.cache(tx, session=self.session)
+        txc = TxCache(
+                self.tx_hash,
+                self.alice,
+                self.bob,
+                self.foo_token,
+                self.bar_token,
+                self.from_value,
+                self.to_value,
+                session=self.session,
+                )
+        self.session.add(txc)
         self.session.commit()
 
         otx = Otx.load(self.tx_hash)
