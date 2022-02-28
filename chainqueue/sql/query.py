@@ -515,7 +515,7 @@ def get_latest_txs(chain_spec,  count=10, since=None, until=None, status=None, n
     if not_status != None:
         q = q.filter(Otx.status.op('&')(not_status)==0)
 
-    q = q.order_by(Otx.nonce.asc(), Otx.date_created.asc()).limit(count)
+    q = q.order_by(Otx.date_created.desc(), Otx.nonce.desc()).limit(count)
     results = q.all()
     for r in results:
         if txs.get(r.tx_hash) != None:
