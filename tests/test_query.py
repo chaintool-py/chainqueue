@@ -373,7 +373,6 @@ class TestTxQuery(TestTxBase):
 
         nonce_hashes.append(tx_hash)
 
-        time_between = datetime.datetime.utcnow()
 
         tx_hash = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
@@ -401,7 +400,7 @@ class TestTxQuery(TestTxBase):
 
         txs = get_latest_txs(self.chain_spec, session=self.session)
         self.assertEqual(len(txs.keys()), 3)
-         
+
         txs = get_latest_txs(self.chain_spec, count=1, session=self.session)
         self.assertEqual(len(txs.keys()), 1)
 
