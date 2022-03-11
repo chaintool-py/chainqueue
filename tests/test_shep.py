@@ -40,6 +40,12 @@ class TestShep(TestShepBase):
         logg.debug('file {}'.format(self.path))
 
 
+    def test_shep_valid(self):
+        self.state.put('foo', 'bar')
+        self.state.set('foo', self.state.IN_NETWORK)
+        self.state.set('foo', self.state.FINAL)
+    
+
     def test_shep_invalid(self):
         self.state.put('foo', 'bar')
         self.state.set('foo', self.state.FINAL)

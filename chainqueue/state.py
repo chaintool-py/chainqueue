@@ -13,7 +13,7 @@ class Verify:
         to_state_name = state_store.name(to_state)
         m = None
         try:  
-            m = getattr(self, 'verify_' + to_state_name)
+            m = getattr(self, to_state_name)
         except AttributeError:
             logg.debug('foo {}'.format(to_state_name))
             return None
@@ -26,13 +26,56 @@ class Verify:
         return r
 
 
-    def verify_INSUFFICIENT_FUNDS(self, state_store, from_state):
+    def INSUFFICIENT_FUNDS(self, state_store, from_state):
         if from_state & state_store.FINAL:
             return 'already finalized'
-        if from_state & state_store.INSUFFICIENT_FUNDS:
+        if from_state & state_store.IN_NETWORK:
             return 'already in network'
 
 
+    def UNKNOWN_ERROR(self, state_store, from_state):
+        if from_state & state_store.FINAL:
+            return 'already finalized'
+        if from_state & state_store.RESERVED:
+            return 'not reserved'
+        if from_state & state_store.mask_error:
+            return 'already finalized'
+
+
+    def NODE_ERROR(self, state_store, from_state):
+        if from_state & state_store.FINAL:
+            return 'already finalized'
+        if from_state & state_store.IN_NETWORK:
+            return 'already in network'
+        if from_state & state_store.RESERVED:
+            return 'not reserved'
+        if from_state & state_store.mask_error:
+            return 'already finalized'
+
+
+    def OBSOLETE(self, state_store, from_state):
+        if from_state & state_store.FINAL:
+            return 'already finalized'
+        if from_state & state_store.IN_NETWORK:
+            return 'already in network'
+        if from_state & state_store.OBSOLETE:
+            return 'already obsolete'
+
+    
+    def MANUAL(self, state_store, from_state):
+        if from_state & state_store.FINAL:
+            return 'already finalized'
+
+
+    def QUEUED(self, state_store, from_state):
+        if from_state & state_store.FINAL:
+            return 'already finalized'
+        if from_state & state_store.IN_NETWORK:
+            if not from_state & state_store.mask_error:
+                return 'not in error state'
+        elif from_state & state_store.mask_error:
+            return 'no first send on error state'
+            
 
 class Status(shep.persist.PersistedState):
    
@@ -62,3 +105,5 @@ class Status(shep.persist.PersistedState):
         self.alias('REJECTED', self.NODE_ERROR | self.FINAL)
         self.alias('REVERTED', self.IN_NETWORK | self.FINAL, self.NETWORK_ERROR)
         self.alias('SUCCESS', self.IN_NETWORK | self.FINAL)
+
+        self.mask_error = self.LOCAL_ERROR | self.NODE_ERROR | self.NETWORK_ERROR | self.UNKNOWN_ERROR
