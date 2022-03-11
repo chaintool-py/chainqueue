@@ -11,15 +11,6 @@ from hexathon import (
 logg = logging.getLogger(__name__)
 
 
-def to_key(k, v):
-    return '{:>010s}_{}'.format(k, v)
-
-
-def from_key(k):
-    (seq_str, tx_hash) = k.split('_')
-    return (int(seq_str), tx_hash,)
-
-
 def normalize_hex(k):
     k = strip_0x(k)
     return uniform(k)
@@ -39,16 +30,12 @@ class QueueEntry:
     def create(self, seq, signed_tx):
         n = str(seq)
         signed_tx = normalize_hex(signed_tx)
-        self.k = to_key(n, self.tx_hash)
-        self.store.put(self.k, signed_tx)
-        self.store.put_seq(self.tx_hash, n)
+        self.k = self.store.put(self.tx_hash, n, signed_tx)
         self.synced = True
 
 
     def load(self):
-        seq = self.store.get_seq(self.tx_hash)
-        self.k = to_key(seq, self.tx_hash)
-        self.signed_tx = self.store.get(self.k)
+        (self.k, self.signed_tx) = self.store.get(self.tx_hash)
         self.synced = True
 
 

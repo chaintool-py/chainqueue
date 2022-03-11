@@ -23,13 +23,13 @@ class MockTranslator:
 class TestShep(TestShepBase):
     
     def test_entry_get(self):
-        tx_hash_one = add_0x(os.urandom(20).hex())
+        tx_hash_one = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         nonce = 42
         entry = QueueEntry(self.store, tx_hash_one)
         entry.create(nonce, signed_tx)
 
-        tx_hash_two = add_0x(os.urandom(20).hex())
+        tx_hash_two = add_0x(os.urandom(32).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         nonce = 42
         entry = QueueEntry(self.store, tx_hash_two)

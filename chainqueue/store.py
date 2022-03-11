@@ -2,10 +2,17 @@
 import logging
 import re
 
-# local imports
-from .entry import from_key
-
 logg = logging.getLogger(__name__)
+
+
+def to_key(k, v):
+    return '{:>010s}_{}'.format(k, v)
+
+
+def from_key(k):
+    (seq_str, tx_hash) = k.split('_')
+    return (int(seq_str), tx_hash,)
+
 
 
 re_u = r'^[^_][_A-Z]+$'
@@ -19,35 +26,36 @@ class Store:
                 continue
             v = self.state_store.from_name(s)
             setattr(self, s, v)
-        for v in ['put', 'get', 'state', 'change', 'set', 'unset']:
+        for v in ['state', 'change', 'set', 'unset']:
             setattr(self, v, getattr(self.state_store, v))
 
 
-    def put(self, k, v):
+    def put(self, k, n, v):
+        self.index_store.put(k, n)
+        k = to_key(n, k)
         self.state_store.put(k, v)
 
 
-    def get(self, k, v):
-        return self.state_store.get(k)
-
-
-    def put_seq(self, k, seq):
-        self.index_store.put(k, seq)
-
-
-    def get_seq(self, k):
-        return self.index_store.get(k)
+    def get(self, k):
+        n = self.index_store.get(k) 
+        k = to_key(n, k)
+        return (k, self.state_store.get(k))
 
 
     def list(self, state=0, limit=4096, strict=False):
         hashes = []
         i = 0
-        for k in self.state_store.list(state):
-            item_state = self.state_store.state(k)
-            if strict:
+
+        hashes_state = self.state_store.list(state)
+        if strict:
+            for k in hashes_state:
+                item_state = self.state_store.state(k)
                 if item_state & state != item_state:
                     continue
-            hashes.append(k)
+                hashes.append(k)
+        else:
+            hashes = hashes_state
+
         hashes.sort()
         hashes_out = []
         for h in hashes:
