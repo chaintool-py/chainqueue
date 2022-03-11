@@ -15,7 +15,6 @@ class Verify:
         try:  
             m = getattr(self, to_state_name)
         except AttributeError:
-            logg.debug('foo {}'.format(to_state_name))
             return None
 
         r = m(state_store, from_state)
