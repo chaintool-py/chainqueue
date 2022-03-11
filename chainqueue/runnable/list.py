@@ -9,7 +9,6 @@ import sys
 from hexathon import add_0x
 import chainlib.cli
 from chainlib.chain import ChainSpec
-from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
 
 # local imports
 from chainqueue.cli import Outputter
