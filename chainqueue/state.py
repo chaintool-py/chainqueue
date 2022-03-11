@@ -26,10 +26,10 @@ class Verify:
         return r
 
 
-    def verify_GAS_ISSUES(self, state_store, from_state):
+    def verify_INSUFFICIENT_FUNDS(self, state_store, from_state):
         if from_state & state_store.FINAL:
             return 'already finalized'
-        if from_state & state_store.GAS_ISSUES:
+        if from_state & state_store.INSUFFICIENT_FUNDS:
             return 'already in network'
 
 
@@ -44,7 +44,7 @@ class Status(shep.persist.PersistedState):
         self.add('RESERVED')
         self.add('IN_NETWORK')
         self.add('DEFERRED')
-        self.add('GAS_ISSUES')
+        self.add('INSUFFICIENT_FUNDS')
         self.add('LOCAL_ERROR')
         self.add('NODE_ERROR')
         self.add('NETWORK_ERROR')
@@ -62,4 +62,3 @@ class Status(shep.persist.PersistedState):
         self.alias('REJECTED', self.NODE_ERROR | self.FINAL)
         self.alias('REVERTED', self.IN_NETWORK | self.FINAL, self.NETWORK_ERROR)
         self.alias('SUCCESS', self.IN_NETWORK | self.FINAL)
-

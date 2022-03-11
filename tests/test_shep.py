@@ -44,7 +44,7 @@ class TestShep(TestShepBase):
         self.state.put('foo', 'bar')
         self.state.set('foo', self.state.FINAL)
         with self.assertRaises(StateTransitionInvalid):
-            self.state.move('foo', self.state.GAS_ISSUES)
+            self.state.move('foo', self.state.INSUFFICIENT_FUNDS)
     
 
 if __name__ == '__main__':
