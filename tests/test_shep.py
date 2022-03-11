@@ -17,6 +17,20 @@ logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
 
 
+class MockIndexStore:
+
+    def __init__(self):
+        self.store = {}
+
+
+    def put(self, k, v):
+        self.store[k] = v
+
+
+    def get(self, k):
+        return self.store.get(k)
+
+
 class TestShepBase(unittest.TestCase):
 
     def setUp(self):
@@ -35,9 +49,13 @@ class TestShep(TestShepBase):
         tx_hash = add_0x(os.urandom(20).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         nonce = 42
-        tx = Tx(self.state, nonce, tx_hash, signed_tx)
-        tx.create()
-        logg.debug('file {}'.format(self.path))
+        mock_store = MockIndexStore()
+        tx = Tx(self.state, mock_store, tx_hash)
+        tx.create(nonce, signed_tx)
+
+        tx_retrieved = Tx(self.state, mock_store, tx_hash)
+        tx_retrieved.load()
+        self.assertEqual(tx_retrieved.signed_tx, signed_tx)
 
 
     def test_shep_valid(self):
