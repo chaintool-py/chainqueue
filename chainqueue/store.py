@@ -2,6 +2,9 @@
 import logging
 import re
 
+# local imports
+from .entry import from_key
+
 logg = logging.getLogger(__name__)
 
 
@@ -45,4 +48,9 @@ class Store:
                 if item_state & state != item_state:
                     continue
             hashes.append(k)
-        return hashes
+        hashes.sort()
+        hashes_out = []
+        for h in hashes:
+            pair = from_key(h)
+            hashes_out.append(pair[1])
+        return hashes_out

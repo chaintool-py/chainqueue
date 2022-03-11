@@ -1,27 +1,45 @@
 # standard imports
 import logging
 
+# ecxternal imports
+from hexathon import (
+        add_0x,
+        strip_0x,
+        uniform,
+        )
+
 logg = logging.getLogger(__name__)
+
+
+def to_key(k, v):
+    return '{:>010s}_{}'.format(k, v)
+
+
+def from_key(k):
+    (seq_str, tx_hash) = k.split('_')
+    return (int(seq_str), tx_hash,)
+
+
+def normalize_hex(k):
+    k = strip_0x(k)
+    return uniform(k)
 
 
 class QueueEntry:
 
     def __init__(self, store, tx_hash):
         self.store = store
-        self.tx_hash = tx_hash
+        self.tx_hash = normalize_hex(tx_hash)
         self.signed_tx = None
         self.seq = None
         self.k = None
         self.synced = False
 
 
-    def __to_key(self, k, v):
-        return '{:>010s}_{}'.format(k, v)
-
-
     def create(self, seq, signed_tx):
         n = str(seq)
-        self.k = self.__to_key(n, self.tx_hash)
+        signed_tx = normalize_hex(signed_tx)
+        self.k = to_key(n, self.tx_hash)
         self.store.put(self.k, signed_tx)
         self.store.put_seq(self.tx_hash, n)
         self.synced = True
@@ -29,7 +47,7 @@ class QueueEntry:
 
     def load(self):
         seq = self.store.get_seq(self.tx_hash)
-        self.k = self.__to_key(seq, self.tx_hash)
+        self.k = to_key(seq, self.tx_hash)
         self.signed_tx = self.store.get(self.k)
         self.synced = True
 

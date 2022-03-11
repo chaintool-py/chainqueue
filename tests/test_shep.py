@@ -4,7 +4,10 @@ import logging
 import unittest
 
 # external imports
-from hexathon import add_0x
+from hexathon import (
+        add_0x,
+        strip_0x,
+        )
 from shep.error import StateTransitionInvalid
 
 # local imports
@@ -32,7 +35,7 @@ class TestShep(TestShepBase):
 
         tx_retrieved = QueueEntry(self.store, tx_hash)
         tx_retrieved.load()
-        self.assertEqual(tx_retrieved.signed_tx, signed_tx)
+        self.assertEqual(tx_retrieved.signed_tx, strip_0x(signed_tx))
 
 
     def test_shep_valid(self):
