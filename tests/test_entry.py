@@ -59,6 +59,8 @@ class TestShep(TestShepBase):
         txs = self.store.list(state=self.store.IN_NETWORK)
         self.assertEqual(len(txs), 2)
 
+        txs = self.store.list(state=self.store.IN_NETWORK, strict=True)
+        self.assertEqual(len(txs), 1)
 
 
 if __name__ == '__main__':

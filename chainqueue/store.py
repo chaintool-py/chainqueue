@@ -36,12 +36,13 @@ class Store:
         return self.index_store.get(k)
 
 
-    def list(self, state=0, limit=4096, state_exact=False):
+    def list(self, state=0, limit=4096, strict=False):
         hashes = []
         i = 0
         for k in self.state_store.list(state):
-            if state_exact:
-                if self.state_store.state(k) & state == state:
+            item_state = self.state_store.state(k)
+            if strict:
+                if item_state & state != item_state:
                     continue
             hashes.append(k)
         return hashes
