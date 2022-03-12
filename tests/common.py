@@ -50,7 +50,10 @@ class MockCacheTokenTx(CacheTokenTx):
 
     def deserialize(self, signed_tx):
         h = hashlib.sha1()
-        h.update(signed_tx + b'\x01')
+        try:
+            h.update(signed_tx + b'\x01')
+        except TypeError:
+            h.update(signed_tx.encode('utf-8') + b'\x01')
         z = h.digest()
         nonce = int.from_bytes(z[:4], 'big')
         token_value = int.from_bytes(z[4:8], 'big')
