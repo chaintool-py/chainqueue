@@ -31,7 +31,7 @@ class TestShep(TestShepBase):
         signed_tx = add_0x(os.urandom(128).hex())
         nonce = 42
         tx = QueueEntry(self.store, tx_hash)
-        tx.create(nonce, signed_tx)
+        tx.create(signed_tx)
 
         tx_retrieved = QueueEntry(self.store, tx_hash)
         tx_retrieved.load()

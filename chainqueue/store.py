@@ -1,26 +1,28 @@
 # standard imports
 import logging
 import re
+import datetime
 
 logg = logging.getLogger(__name__)
 
 
-def to_key(k, v):
-    return '{:>010s}_{}'.format(k, v)
+def to_key(t, n, k):
+    return '{}_{}_{}'.format(t, n, k)
 
 
 def from_key(k):
-    (seq_str, tx_hash) = k.split('_')
-    return (int(seq_str), tx_hash,)
-
+    (ts_str, seq_str, tx_hash) = k.split('_')
+    return (float(ts_str), int(seq_str), tx_hash, )
 
 
 re_u = r'^[^_][_A-Z]+$'
 class Store:
 
-    def __init__(self, state_store, index_store):
+    def __init__(self, state_store, index_store, counter, cache=None):
+        self.cache = cache
         self.state_store = state_store
         self.index_store = index_store
+        self.counter = counter
         for s in dir(self.state_store):
             if not re.match(re_u, s):
                 continue
@@ -30,16 +32,20 @@ class Store:
             setattr(self, v, getattr(self.state_store, v))
 
 
-    def put(self, k, n, v):
-        self.index_store.put(k, n)
-        k = to_key(n, k)
-        self.state_store.put(k, v)
+    def put(self, k, v):
+        n = self.counter.next()
+        t = datetime.datetime.now().timestamp()
+        s = to_key(t, n, k)
+        self.state_store.put(s, v)
+        self.index_store.put(k, s)
+        if self.cache != None:
+            self.cache.put_serialized(v)
 
 
     def get(self, k):
-        n = self.index_store.get(k) 
-        k = to_key(n, k)
-        return (k, self.state_store.get(k))
+        s = self.index_store.get(k)
+        v = self.state_store.get(s)
+        return (s, v,)
 
 
     def list(self, state=0, limit=4096, strict=False):

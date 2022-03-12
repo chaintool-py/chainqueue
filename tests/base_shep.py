@@ -12,7 +12,7 @@ from chainqueue import (
         )
 
 
-class MockIndexStore:
+class MockContentStore:
 
     def __init__(self):
         self.store = {}
@@ -26,10 +26,24 @@ class MockIndexStore:
         return self.store.get(k)
 
 
+class MockCounter:
+
+    def __init__(self):
+        self.c = 0
+
+
+    def next(self):
+        c = self.c
+        self.c += 1
+        return c
+
+
 class TestShepBase(unittest.TestCase):
 
     def setUp(self):
         self.path = tempfile.mkdtemp()
         factory = SimpleFileStoreFactory(self.path).add
         self.state = Status(factory)
-        self.store = Store(self.state, MockIndexStore())
+        content_store = MockContentStore()
+        counter = MockCounter()
+        self.store = Store(self.state, content_store, counter)

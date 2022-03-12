@@ -27,10 +27,9 @@ class QueueEntry:
         self.synced = False
 
 
-    def create(self, seq, signed_tx):
-        n = str(seq)
+    def create(self, signed_tx):
         signed_tx = normalize_hex(signed_tx)
-        self.k = self.store.put(self.tx_hash, n, signed_tx)
+        self.k = self.store.put(self.tx_hash, signed_tx)
         self.synced = True
 
 
