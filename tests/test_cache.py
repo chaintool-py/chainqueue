@@ -11,6 +11,7 @@ from hexathon import add_0x
 from chainqueue import QueueEntry
 from chainqueue.cache import (
         CacheTokenTx,
+        Cache,
         )
 
 # test imports
@@ -45,14 +46,33 @@ class MockCacheTokenTx(CacheTokenTx):
         z = h.digest()
         token = z.hex()
 
+        h = hashlib.sha256()
+        h.update(z)
+        z = h.digest()
+        tx_hash = z.hex()
+
         tx = CacheTokenTx()
-        tx.init(nonce, sender, recipient, value)
+        tx.init(tx_hash, nonce, sender, recipient, value)
         tx.set('src_token', token)
         tx.set('dst_token', token)
         tx.set('src_value', token_value)
         tx.set('dst_value', token_value)
+        tx.confirm(42, 13, 1024000)
 
         return tx
+
+
+class MockTokenCache(Cache):
+
+    def __init__(self):
+        self.db = {}
+
+    def put(self, chain_spec, cache_tx):
+        self.db[cache_tx.tx_hash] = cache_tx
+
+
+    def get(self, chain_spec, tx_hash):
+        pass
 
 
 class TestCache(TestShepBase):

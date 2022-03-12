@@ -5,11 +5,12 @@ import enum
 class CacheTx:
 
     def __init__(self):
-        self.v_sender = None
-        self.v_recipient = None
-        self.v_nonce = None
-        self.v_value = None
+        self.sender = None
+        self.recipient = None
+        self.nonce = None
+        self.value = None
 
+        self.tx_hash = None
         self.block_number = None
         self.tx_index = None
         self.timestamp = None
@@ -21,11 +22,12 @@ class CacheTx:
         self.timestamp = timestamp
 
 
-    def init(self, nonce, sender, recipient, value):
-        self.v_sender = sender
-        self.v_recipient = recipient
-        self.v_nonce = nonce
-        self.v_value = value
+    def init(self, tx_hash, nonce, sender, recipient, value):
+        self.tx_hash = tx_hash
+        self.sender = sender
+        self.recipient = recipient
+        self.nonce = nonce
+        self.value = value
 
 
     def deserialize(self, signed_tx):
@@ -38,7 +40,7 @@ class CacheTx:
 
 
     def __str__(self):
-        return '{} -> {} : {}'.format(self.v_sender, self.v_recipient, self.v_value)
+        return '{}: {} ({}) -> {} = {}'.format(self.tx_hash, self.sender, self.nonce, self.recipient, self.value)
 
 
 
