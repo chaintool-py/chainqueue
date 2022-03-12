@@ -36,8 +36,10 @@ class Store:
         for v in ['state', 'change', 'set', 'unset']:
             setattr(self, v, getattr(self.state_store, v))
 
+        logg.debug('cache {}'.format(cache))
 
-    def put(self, k, v, cache_adapter=CacheTx()):
+
+    def put(self, k, v, cache_adapter=CacheTx):
         n = self.counter.next()
         t = datetime.datetime.now().timestamp()
         s = to_key(t, n, k)

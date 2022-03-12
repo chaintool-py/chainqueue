@@ -2,7 +2,6 @@
 import os
 import logging
 import unittest
-import hashlib
 import math
 
 # external imports
@@ -18,51 +17,13 @@ from chainqueue.cache import (
 
 # test imports
 from tests.base_shep import TestShepBase
-from tests.common import MockTokenCache
+from tests.common import (
+        MockTokenCache,
+        MockTokenCacheTx,
+        )
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
-
-
-class MockCacheTokenTx(CacheTokenTx):
-
-    def deserialize(self, signed_tx):
-        h = hashlib.sha1()
-        h.update(signed_tx + b'\x01')
-        z = h.digest()
-        nonce = int.from_bytes(z[:4], 'big')
-        token_value = int.from_bytes(z[4:8], 'big')
-        value = int.from_bytes(z[8:12], 'big')
-        
-        h = hashlib.sha1()
-        h.update(z)
-        z = h.digest()
-        sender = z.hex()
-
-        h = hashlib.sha1()
-        h.update(z)
-        z = h.digest()
-        recipient = z.hex()
-
-        h = hashlib.sha1()
-        h.update(z)
-        z = h.digest()
-        token = z.hex()
-
-        h = hashlib.sha256()
-        h.update(z)
-        z = h.digest()
-        tx_hash = z.hex()
-
-        #tx = CacheTokenTx(normalizer=self.normalizer)
-        self.init(tx_hash, nonce, sender, recipient, value)
-        self.set('src_token', token)
-        self.set('dst_token', token)
-        self.set('src_value', token_value)
-        self.set('dst_value', token_value)
-        self.confirm(42, 13, 1024000)
-
-        return self
 
 
 class MockNormalizer:
