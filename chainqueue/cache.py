@@ -1,3 +1,7 @@
+# standard imports
+import enum
+
+
 class CacheTx:
 
     def __init__(self):
@@ -48,21 +52,40 @@ class CacheTokenTx(CacheTx):
         self.v_dst_value = None
 
 
+class CacheSort(enum.Enum):
+    DATE = 1
+    NONCE = 2
+
+
+class CacheFilter:
+
+    def __init__(self, senders=None, recipients=None, nonce=None, before=None, after=None, sort=CacheSort.DATE, reverse=False):
+        self.senders = senders
+        self.recipients = recipients
+        self.nonce = nonce
+        self.before = before
+        self.after = after
+        self.sort = sort
+        self.reverse = reverse
+
 
 class Cache: 
-
-    def __init__(self, translator):
-        self.translator = translator
- 
-
-    def put_serialized(self, chain_spec, signed_tx):
-        cache_tx = self.translate(chain_spec, signed_tx)
-        return self.put(chain_spec, cache_tx)
-
 
     def put(self, chain_spec, cache_tx):
         raise NotImplementedError()
 
 
     def get(self, chain_spec, tx_hash):
+        raise NotImplementedError()
+
+
+    def by_nonce(self, cache_filter):
+        raise NotImplementedError()
+
+
+    def by_date(self, cache_filter=None):
+        raise NotImplementedError()
+
+
+    def count(self, cache_filter=None):
         raise NotImplementedError()
