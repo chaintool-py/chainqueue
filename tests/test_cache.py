@@ -19,7 +19,7 @@ from chainqueue.cache import (
 from tests.base_shep import TestShepBase
 from tests.common import (
         MockTokenCache,
-        MockTokenCacheTx,
+        MockCacheTokenTx,
         )
 
 logging.basicConfig(level=logging.DEBUG)
