@@ -31,31 +31,31 @@ class TestEntry(TestShepBase):
         entry = QueueEntry(self.store, tx_hash_two)
         entry.create(signed_tx)
 
-        txs = self.store.list()
+        txs = self.store.by_state()
         self.assertEqual(len(txs), 2)
       
         entry = QueueEntry(self.store, tx_hash_one)
         entry.load()
         entry.sent()
         
-        txs = self.store.list()
+        txs = self.store.by_state()
         self.assertEqual(len(txs), 1)
 
-        txs = self.store.list(state=self.store.IN_NETWORK)
+        txs = self.store.by_state(state=self.store.IN_NETWORK)
         self.assertEqual(len(txs), 1)
 
         entry.succeed(0)
-        txs = self.store.list()
+        txs = self.store.by_state()
         self.assertEqual(len(txs), 1)
       
         entry = QueueEntry(self.store, tx_hash_two)
         entry.load()
         entry.sent()
         
-        txs = self.store.list(state=self.store.IN_NETWORK)
+        txs = self.store.by_state(state=self.store.IN_NETWORK)
         self.assertEqual(len(txs), 2)
 
-        txs = self.store.list(state=self.store.IN_NETWORK, strict=True)
+        txs = self.store.by_state(state=self.store.IN_NETWORK, strict=True)
         self.assertEqual(len(txs), 1)
 
 

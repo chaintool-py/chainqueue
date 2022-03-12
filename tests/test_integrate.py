@@ -13,8 +13,10 @@ from chainqueue import (
         )
 
 # test imports
-from tests.common import MockCounter
-
+from tests.common import (
+        MockCounter,
+        MockTokenCache
+        )
 
 
 class MockContentStore:
@@ -40,4 +42,13 @@ class TestShepBase(unittest.TestCase):
         content_store = MockContentStore()
         counter = MockCounter()
         chain_spec = ChainSpec('foo', 'bar', 42, 'baz')
-        self.store = Store(chain_spec, self.state, content_store, counter)
+        self.cache = MockTokenCache()
+        self.store = Store(chain_spec, self.state, content_store, counter, cache=self.cache)
+
+
+    def test_basic(self):
+        pass
+
+
+if __name__ == '__main__':
+    unittest.main()

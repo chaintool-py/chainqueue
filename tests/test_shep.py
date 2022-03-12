@@ -49,7 +49,11 @@ class TestShep(TestShepBase):
         self.state.set('foo', self.state.FINAL)
         with self.assertRaises(StateTransitionInvalid):
             self.state.move('foo', self.state.INSUFFICIENT_FUNDS)
-    
+   
+
+    def test_shep_cache(self):
+        self.store.put('foo', 'bar')
+
 
 if __name__ == '__main__':
     unittest.main()

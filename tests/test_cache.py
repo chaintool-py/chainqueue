@@ -13,12 +13,12 @@ from chainlib.chain import ChainSpec
 from chainqueue import QueueEntry
 from chainqueue.cache import (
         CacheTokenTx,
-        Cache,
         CacheFilter,
         )
 
 # test imports
 from tests.base_shep import TestShepBase
+from tests.common import MockTokenCache
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
@@ -63,32 +63,6 @@ class MockCacheTokenTx(CacheTokenTx):
         self.confirm(42, 13, 1024000)
 
         return self
-
-
-class MockTokenCache(Cache):
-
-    def __init__(self):
-        self.db = {}
-        self.last_filter = None
-
-    def put(self, chain_spec, cache_tx):
-        self.db[cache_tx.tx_hash] = cache_tx
-
-
-    def get(self, chain_spec, tx_hash):
-        return self.db[tx_hash]
-
-
-    def by_nonce(self, cache_filter):
-        self.last_filter = cache_filter
-
-
-    def by_date(self, cache_filter=None):
-        self.last_filter = cache_filter
-
-
-    def count(self, cache_filter): 
-        self.last_filter = cache_filter
 
 
 class MockNormalizer:

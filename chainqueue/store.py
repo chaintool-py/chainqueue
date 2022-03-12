@@ -3,6 +3,10 @@ import logging
 import re
 import datetime
 
+# local imports
+from chainqueue.cache import CacheTx
+
+
 logg = logging.getLogger(__name__)
 
 
@@ -18,7 +22,8 @@ def from_key(k):
 re_u = r'^[^_][_A-Z]+$'
 class Store:
 
-    def __init__(self, state_store, index_store, counter, cache=None):
+    def __init__(self, chain_spec, state_store, index_store, counter, cache=None):
+        self.chain_spec = chain_spec
         self.cache = cache
         self.state_store = state_store
         self.index_store = index_store
@@ -32,14 +37,16 @@ class Store:
             setattr(self, v, getattr(self.state_store, v))
 
 
-    def put(self, k, v):
+    def put(self, k, v, cache_adapter=CacheTx()):
         n = self.counter.next()
         t = datetime.datetime.now().timestamp()
         s = to_key(t, n, k)
         self.state_store.put(s, v)
         self.index_store.put(k, s)
         if self.cache != None:
-            self.cache.put_serialized(v)
+            tx = cache_adapter()
+            tx.deserialize(v)
+            self.cache.put(self.chain_spec, tx) 
 
 
     def get(self, k):
@@ -48,7 +55,7 @@ class Store:
         return (s, v,)
 
 
-    def list(self, state=0, limit=4096, strict=False):
+    def by_state(self, state=0, limit=4096, strict=False):
         hashes = []
         i = 0
 
@@ -68,3 +75,7 @@ class Store:
             pair = from_key(h)
             hashes_out.append(pair[1])
         return hashes_out
+
+
+    def upcoming(self, limit=4096):
+        return self.by_state(state=self.QUEUED, limit=limit)
