@@ -1,10 +1,29 @@
 # standard imports
 import enum
+import logging
+
+logg = logging.getLogger(__name__)
+
+
+class NoopNormalizer:
+
+    def __init__(self):
+        self.address = self.noop
+        self.hash = self.noop
+        self.value = self.noop
+
+
+    def noop(self, v):
+        return v
+
+
+noop_normalizer = NoopNormalizer()
 
 
 class CacheTx:
 
-    def __init__(self):
+    def __init__(self, normalizer=noop_normalizer):
+        self.normalizer = normalizer
         self.sender = None
         self.recipient = None
         self.nonce = None
@@ -23,11 +42,11 @@ class CacheTx:
 
 
     def init(self, tx_hash, nonce, sender, recipient, value):
-        self.tx_hash = tx_hash
-        self.sender = sender
-        self.recipient = recipient
+        self.tx_hash = self.normalizer.hash(tx_hash)
+        self.sender = self.normalizer.address(sender)
+        self.recipient = self.normalizer.address(recipient)
         self.nonce = nonce
-        self.value = value
+        self.value = self.normalizer.value(value)
 
 
     def deserialize(self, signed_tx):
@@ -46,8 +65,8 @@ class CacheTx:
 
 class CacheTokenTx(CacheTx):
 
-    def __init__(self): #, nonce, sender, recipient, src_token, dst_token, src_value, dst_value):
-        super(CacheTokenTx, self).__init__()
+    def __init__(self, normalizer=noop_normalizer):
+        super(CacheTokenTx, self).__init__(normalizer=normalizer)
         self.v_src_token = None
         self.v_src_value = None
         self.v_dst_token = None
@@ -61,14 +80,37 @@ class CacheSort(enum.Enum):
 
 class CacheFilter:
 
-    def __init__(self, senders=None, recipients=None, nonce=None, before=None, after=None, sort=CacheSort.DATE, reverse=False):
-        self.senders = senders
-        self.recipients = recipients
+    def __init__(self, normalizer=noop_normalizer, nonce=None, before=None, after=None, sort=CacheSort.DATE, reverse=False):
+        self.normalizer = normalizer
+        self.senders = None
+        self.recipients = None
         self.nonce = nonce
         self.before = before
         self.after = after
         self.sort = sort
         self.reverse = reverse
+
+
+    def add_senders(self, senders):
+        if self.senders == None:
+            self.senders = []
+        if isinstance(senders, str):
+            senders = [senders]
+        for sender in senders:
+            if self.normalizer != None:
+                sender = self.normalizer.address(sender)
+            self.senders.append(sender)
+
+
+    def add_recipients(self, recipients):
+        if self.recipients == None:
+            self.recipients = []
+        if isinstance(recipients, str):
+            recipients = [recipients]
+        for recipient in recipients:
+            if self.normalizer != None:
+                recipient = self.normalizer.address(recipient)
+            self.recipients.append(recipient)
 
 
 class Cache: 

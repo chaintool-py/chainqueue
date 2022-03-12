@@ -3,15 +3,18 @@ import os
 import logging
 import unittest
 import hashlib
+import math
 
 # external imports
 from hexathon import add_0x
+from chainlib.chain import ChainSpec
 
 # local imports
 from chainqueue import QueueEntry
 from chainqueue.cache import (
         CacheTokenTx,
         Cache,
+        CacheFilter,
         )
 
 # test imports
@@ -51,40 +54,106 @@ class MockCacheTokenTx(CacheTokenTx):
         z = h.digest()
         tx_hash = z.hex()
 
-        tx = CacheTokenTx()
-        tx.init(tx_hash, nonce, sender, recipient, value)
-        tx.set('src_token', token)
-        tx.set('dst_token', token)
-        tx.set('src_value', token_value)
-        tx.set('dst_value', token_value)
-        tx.confirm(42, 13, 1024000)
+        #tx = CacheTokenTx(normalizer=self.normalizer)
+        self.init(tx_hash, nonce, sender, recipient, value)
+        self.set('src_token', token)
+        self.set('dst_token', token)
+        self.set('src_value', token_value)
+        self.set('dst_value', token_value)
+        self.confirm(42, 13, 1024000)
 
-        return tx
+        return self
 
 
 class MockTokenCache(Cache):
 
     def __init__(self):
         self.db = {}
+        self.last_filter = None
 
     def put(self, chain_spec, cache_tx):
         self.db[cache_tx.tx_hash] = cache_tx
 
 
     def get(self, chain_spec, tx_hash):
-        pass
+        return self.db[tx_hash]
+
+
+    def by_nonce(self, cache_filter):
+        self.last_filter = cache_filter
+
+
+    def by_date(self, cache_filter=None):
+        self.last_filter = cache_filter
+
+
+    def count(self, cache_filter): 
+        self.last_filter = cache_filter
+
+
+class MockNormalizer:
+
+    def address(self, v):
+        return 'address' + v
+
+
+    def value(self, v):
+        dv = int(math.log10(v) + 1)
+        return float(v / (10 ** dv))
+
+
+    def hash(self, v):
+        return 'ashbashhash' + v
 
 
 class TestCache(TestShepBase):
 
     def setUp(self):
         super(TestCache, self).setUp()
-        self.tx = MockCacheTokenTx()
+        self.chain_spec = ChainSpec('foo', 'bar', 42, 'baz')
+        self.cache = MockTokenCache()
 
-    def test_basic_translator(self):
+    
+    def test_cache_instance(self):
+        normalizer = MockNormalizer()
         a = b'foo'
-        tx = self.tx.deserialize(a)
-        print(tx)
+        tx = MockCacheTokenTx(normalizer=normalizer)
+        tx.deserialize(a)
+        self.assertTrue(isinstance(tx.value, float))
+        self.assertEqual(tx.sender[:4], 'addr')
+        self.assertEqual(tx.recipient[:4], 'addr')
+        self.assertEqual(tx.tx_hash[:11], 'ashbashhash')
+
+
+    def test_cache_putget(self):
+        a = b'foo'
+        tx = MockCacheTokenTx()
+        tx.deserialize(a)
+        self.cache.put(self.chain_spec, tx)
+        tx_retrieved = self.cache.get(self.chain_spec, tx.tx_hash)
+        self.assertEqual(tx, tx_retrieved)
+
+
+    def test_cache_filter(self):
+        normalizer = MockNormalizer()
+        fltr = CacheFilter(normalizer=normalizer)
+
+        sender = os.urandom(20).hex()
+        fltr.add_senders(sender)
+
+        recipient_one = os.urandom(20).hex()
+        recipient_two = os.urandom(20).hex()
+        fltr.add_recipients([recipient_one, recipient_two])
+
+        self.assertEqual(fltr.senders[0][:4], 'addr')
+        self.assertEqual(fltr.recipients[1][:4], 'addr')
+
+
+    def test_cache_query(self):
+        a = os.urandom(20).hex()
+        fltr = CacheFilter(nonce=42)
+        self.cache.count(fltr)
+        self.assertEqual(self.cache.last_filter, fltr)
 
 
 if __name__ == '__main__':
