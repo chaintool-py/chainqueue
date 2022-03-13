@@ -118,3 +118,10 @@ class QueueEntry:
 
     def succeed(self, block):
         self.store.set(self.k, self.store.FINAL)
+
+
+    def __str__(self):
+        v = self.store.get(self.tx_hash)
+        n = self.store.state(v[0])
+        s = self.store.name(n)
+        return '{}: {}'.format(self.tx_hash, s)

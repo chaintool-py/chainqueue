@@ -5,6 +5,7 @@ import datetime
 
 # local imports
 from chainqueue.cache import CacheTx
+from chainqueue.entry import QueueEntry
 
 
 logg = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ class Store:
                 continue
             v = self.state_store.from_name(s)
             setattr(self, s, v)
-        for v in ['state', 'change', 'set', 'unset']:
+        for v in ['state', 'change', 'set', 'unset', 'name']:
             setattr(self, v, getattr(self.state_store, v))
 
 
@@ -59,23 +60,38 @@ class Store:
         hashes = []
         i = 0
 
-        hashes_state = self.state_store.list(state)
-        if strict:
-            for k in hashes_state:
-                item_state = self.state_store.state(k)
+        refs_state = self.state_store.list(state)
+        
+        for ref in refs_state:
+            v = from_key(ref)
+            hsh = v[2]
+
+            if strict:
+                item_state = self.state_store.state(ref)
                 if item_state & state != item_state:
                     continue
-                hashes.append(k)
-        else:
-            hashes = hashes_state
+            hashes.append(hsh)
 
         hashes.sort()
-        hashes_out = []
-        for h in hashes:
-            pair = from_key(h)
-            hashes_out.append(pair[1])
-        return hashes_out
+        return hashes
 
 
     def upcoming(self, limit=4096):
         return self.by_state(state=self.QUEUED, limit=limit)
+
+
+    def deferred(self, limit=4096):
+        return self.by_state(state=self.DEFERRED, limit=limit)
+
+
+    def pending(self, limit=4096):
+        return self.by_state(state=0, limit=limit, strict=True)
+
+
+    def enqueue(self, k):
+        entry = QueueEntry(self, k)
+        entry.load()
+        try:
+            entry.retry()
+        except StateTransitionInvalid:
+            entry.readysend()

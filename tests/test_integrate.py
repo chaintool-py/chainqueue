@@ -43,5 +43,15 @@ class TestIntegrateBase(TestShepBase):
         self.store.put(b'foo'.hex(), b'bar'.hex(), cache_adapter=MockCacheTokenTx)
 
 
+    def test_state_move(self):
+        hx = b'foo'.hex()
+        self.store.put(hx, b'bar'.hex(), cache_adapter=MockCacheTokenTx)
+        self.store.get(hx)
+        self.store.enqueue(hx)
+        v = self.store.upcoming()
+        self.assertEqual(len(v), 1)
+        self.assertEqual(v[0], hx)
+
+
 if __name__ == '__main__':
     unittest.main()
