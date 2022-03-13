@@ -99,4 +99,5 @@ class Store:
 
     def fail(self, k):
         entry = QueueEntry(self, k)
-        entry.reject()
+        entry.load()
+        entry.sendfail()
