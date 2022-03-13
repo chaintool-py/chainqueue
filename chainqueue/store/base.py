@@ -1,14 +1,10 @@
 # standard imports
-import logging
 import re
 import datetime
 
 # local imports
 from chainqueue.cache import CacheTx
 from chainqueue.entry import QueueEntry
-
-
-logg = logging.getLogger(__name__)
 
 
 def to_key(t, n, k):
@@ -81,7 +77,6 @@ class Store:
 
             if threshold != None:
                 v = self.state_store.modified(ref)
-                logg.debug('compare {} {}'.format(v, threshold))
                 if v > threshold:
                     continue
 
