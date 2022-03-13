@@ -34,7 +34,14 @@ class Store:
                 continue
             v = self.state_store.from_name(s)
             setattr(self, s, v)
-        for v in ['state', 'change', 'set', 'unset', 'name']:
+        for v in [
+                'state',
+                'change',
+                'set',
+                'unset',
+                'name',
+                'modified',
+                ]:
             setattr(self, v, getattr(self.state_store, v))
 
 
@@ -48,6 +55,7 @@ class Store:
             tx = cache_adapter()
             tx.deserialize(v)
             self.cache.put(self.chain_spec, tx) 
+        return s
 
 
     def get(self, k):
@@ -56,7 +64,7 @@ class Store:
         return (s, v,)
 
 
-    def by_state(self, state=0, limit=4096, strict=False):
+    def by_state(self, state=0, limit=4096, strict=False, threshold=None):
         hashes = []
         i = 0
 
@@ -70,7 +78,16 @@ class Store:
                 item_state = self.state_store.state(ref)
                 if item_state & state != item_state:
                     continue
+
+            if threshold != None:
+                v = self.state_store.modified(ref)
+                logg.debug('compare {} {}'.format(v, threshold))
+                if v > threshold:
+                    continue
+
             hashes.append(hsh)
+
+
 
         hashes.sort()
         return hashes
@@ -80,8 +97,8 @@ class Store:
         return self.by_state(state=self.QUEUED, limit=limit)
 
 
-    def deferred(self, limit=4096):
-        return self.by_state(state=self.DEFERRED, limit=limit)
+    def deferred(self, limit=4096, threshold=None):
+        return self.by_state(state=self.DEFERRED, limit=limit, threshold=threshold)
 
 
     def pending(self, limit=4096):

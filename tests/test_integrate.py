@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 import logging
+import time
 
 # external imports
 from shep.store.file import SimpleFileStoreFactory
@@ -97,6 +98,21 @@ class TestIntegrateBase(TestShepBase):
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         v = self.store.deferred()
         self.assertEqual(len(v), 2)
+
+
+    def test_state_date_threshold(self):
+        hx = os.urandom(4).hex()
+        s = self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.fail(hx)
+        then = self.store.modified(s)
+        time.sleep(0.1)
+
+        hx = os.urandom(4).hex()
+        s = self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.fail(hx)
+
+        v = self.store.deferred(threshold=then)
+        self.assertEqual(len(v), 1)
 
 
 if __name__ == '__main__':
