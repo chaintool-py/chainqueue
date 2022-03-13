@@ -1,6 +1,7 @@
 # standard imports
 import tempfile
 import unittest
+import shutil
 
 # external imports
 from shep.store.file import SimpleFileStoreFactory
@@ -13,22 +14,10 @@ from chainqueue import (
         )
 
 # test imports
-from tests.common import MockCounter
-
-
-
-class MockContentStore:
-
-    def __init__(self):
-        self.store = {}
-
-
-    def put(self, k, v):
-        self.store[k] = v
-
-
-    def get(self, k):
-        return self.store.get(k)
+from tests.common import (
+        MockCounter,
+        MockContentStore,
+        )
 
 
 class TestShepBase(unittest.TestCase):
@@ -41,3 +30,7 @@ class TestShepBase(unittest.TestCase):
         counter = MockCounter()
         chain_spec = ChainSpec('foo', 'bar', 42, 'baz')
         self.store = Store(chain_spec, self.state, content_store, counter)
+
+
+    def tearDown(self):
+        shutil.rmtree(self.path)

@@ -79,7 +79,6 @@ class MockCacheTokenTx(CacheTokenTx):
         z = h.digest()
         tx_hash = z.hex()
 
-        #tx = CacheTokenTx(normalizer=self.normalizer)
         self.init(tx_hash, nonce, sender, recipient, value)
         self.set('src_token', token)
         self.set('dst_token', token)
@@ -90,4 +89,15 @@ class MockCacheTokenTx(CacheTokenTx):
         return self
 
 
+class MockContentStore:
 
+    def __init__(self):
+        self.store = {}
+
+
+    def put(self, k, v):
+        self.store[k] = v
+
+
+    def get(self, k):
+        return self.store.get(k)

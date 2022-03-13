@@ -18,25 +18,12 @@ from tests.common import (
         MockCounter,
         MockTokenCache,
         MockCacheTokenTx,
+        MockContentStore,
         )
 from tests.base_shep import TestShepBase
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
-
-
-class MockContentStore:
-
-    def __init__(self):
-        self.store = {}
-
-
-    def put(self, k, v):
-        self.store[k] = v
-
-
-    def get(self, k):
-        return self.store.get(k)
 
 
 class TestIntegrateBase(TestShepBase):
