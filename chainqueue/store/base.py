@@ -95,3 +95,8 @@ class Store:
             entry.retry()
         except StateTransitionInvalid:
             entry.readysend()
+
+
+    def fail(self, k):
+        entry = QueueEntry(self, k)
+        entry.reject()

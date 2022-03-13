@@ -43,7 +43,7 @@ class TestIntegrateBase(TestShepBase):
         self.store.put(b'foo'.hex(), b'bar'.hex(), cache_adapter=MockCacheTokenTx)
 
 
-    def test_state_move(self):
+    def test_state_enqueu(self):
         hx = b'foo'.hex()
         self.store.put(hx, b'bar'.hex(), cache_adapter=MockCacheTokenTx)
         self.store.get(hx)
@@ -51,6 +51,13 @@ class TestIntegrateBase(TestShepBase):
         v = self.store.upcoming()
         self.assertEqual(len(v), 1)
         self.assertEqual(v[0], hx)
+
+
+    def test_state_defer(self):
+        hx = b'foo'.hex()
+        self.store.put(hx, b'bar'.hex(), cache_adapter=MockCacheTokenTx)
+        self.store.get(hx)
+        self.store.fail(hx)
 
 
 if __name__ == '__main__':
