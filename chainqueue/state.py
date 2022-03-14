@@ -46,7 +46,7 @@ class Verify:
             return 'already finalized'
         if from_state & state_store.IN_NETWORK:
             return 'already in network'
-        if from_state & state_store.RESERVED:
+        if not from_state & state_store.RESERVED:
             return 'not reserved'
         if from_state & state_store.mask_error:
             return 'already in error state'

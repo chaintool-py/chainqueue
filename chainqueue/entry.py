@@ -27,6 +27,10 @@ class QueueEntry:
         self.synced = False
 
 
+    def serialize(self):
+        return self.signed_tx
+
+
     def create(self, signed_tx):
         signed_tx = normalize_hex(signed_tx)
         self.k = self.store.put(self.tx_hash, signed_tx)

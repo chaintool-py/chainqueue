@@ -100,6 +100,12 @@ class Store:
         return self.by_state(state=0, limit=limit, strict=True)
 
 
+    def reserve(self, k):
+        entry = QueueEntry(self, k)
+        entry.load()
+        entry.reserve()
+
+
     def enqueue(self, k):
         entry = QueueEntry(self, k)
         entry.load()
@@ -113,3 +119,16 @@ class Store:
         entry = QueueEntry(self, k)
         entry.load()
         entry.sendfail()
+
+
+    def send_start(self, k):
+        entry = QueueEntry(self, k)
+        entry.load()
+        entry.reserve()
+        return entry
+
+
+    def send_end(self, k):
+        entry = QueueEntry(self, k)
+        entry.load()
+        entry.sent()
