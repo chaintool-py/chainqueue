@@ -27,7 +27,7 @@ class MockTokenCache(Cache):
         self.last_filter = None
 
     def put(self, chain_spec, cache_tx):
-        self.db[cache_tx.tx_hash] = cache_tx
+        self.db[cache_tx.hash] = cache_tx
 
 
     def get(self, chain_spec, tx_hash):

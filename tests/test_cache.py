@@ -57,7 +57,7 @@ class TestCache(TestShepBase):
         self.assertTrue(isinstance(tx.value, float))
         self.assertEqual(tx.sender[:4], 'addr')
         self.assertEqual(tx.recipient[:4], 'addr')
-        self.assertEqual(tx.tx_hash[:11], 'ashbashhash')
+        self.assertEqual(tx.hash[:11], 'ashbashhash')
 
 
     def test_cache_putget(self):
@@ -65,7 +65,7 @@ class TestCache(TestShepBase):
         tx = MockCacheTokenTx()
         tx.deserialize(a)
         self.cache.put(self.chain_spec, tx)
-        tx_retrieved = self.cache.get(self.chain_spec, tx.tx_hash)
+        tx_retrieved = self.cache.get(self.chain_spec, tx.hash)
         self.assertEqual(tx, tx_retrieved)
 
 

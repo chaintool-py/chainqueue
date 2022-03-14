@@ -121,6 +121,15 @@ class Store:
         entry.sendfail()
 
 
+    def final(self, k, block, tx, error=False):
+        entry = QueueEntry(self, k)
+        entry.load()
+        if error:
+            entry.fail(block, tx)
+        else:
+            entry.succeed(block, tx)
+
+
     def send_start(self, k):
         entry = QueueEntry(self, k)
         entry.load()

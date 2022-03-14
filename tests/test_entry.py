@@ -44,7 +44,7 @@ class TestEntry(TestShepBase):
         txs = self.store.by_state(state=self.store.IN_NETWORK)
         self.assertEqual(len(txs), 1)
 
-        entry.succeed(0)
+        entry.succeed(None, None)
         txs = self.store.by_state()
         self.assertEqual(len(txs), 1)
       

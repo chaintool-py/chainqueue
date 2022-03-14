@@ -105,12 +105,12 @@ class QueueEntry:
         self.store.change(self.k, self.store.RESERVED, self.store.QUEUED) 
 
 
-    def fail(self, block):
+    def fail(self, block, tx):
         if self.__match_state(self.store.NETWORK_ERROR):
             return
         self.store.set(self.k, self.store.NETWORK_ERROR)
-        if self.cache:
-            self.cache.set_block(self.tx_hash, block)
+        if self.store.cache:
+            self.store.cache.set_block(self.tx_hash, block, tx)
 
 
     def cancel(self, confirmed=False):
@@ -120,8 +120,10 @@ class QueueEntry:
             self.store.change(self.k, self.store.OBSOLETE, self.store.RESERVED | self.store.QUEUED)
 
 
-    def succeed(self, block):
+    def succeed(self, block, tx):
         self.store.set(self.k, self.store.FINAL)
+        if self.store.cache:
+            self.store.cache.set_block(self.tx_hash, block, tx)
 
 
     def __str__(self):

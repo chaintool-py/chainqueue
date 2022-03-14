@@ -29,7 +29,7 @@ class CacheTx:
         self.nonce = None
         self.value = None
 
-        self.tx_hash = None
+        self.hash = None
         self.block_number = None
         self.tx_index = None
         self.timestamp = None
@@ -42,7 +42,7 @@ class CacheTx:
 
 
     def init(self, tx_hash, nonce, sender, recipient, value):
-        self.tx_hash = self.normalizer.hash(tx_hash)
+        self.hash = self.normalizer.hash(tx_hash)
         self.sender = self.normalizer.address(sender)
         self.recipient = self.normalizer.address(recipient)
         self.nonce = nonce
@@ -59,7 +59,7 @@ class CacheTx:
 
 
     def __str__(self):
-        return '{}: {} ({}) -> {} = {}'.format(self.tx_hash, self.sender, self.nonce, self.recipient, self.value)
+        return '{}: {} ({}) -> {} = {}'.format(self.hash, self.sender, self.nonce, self.recipient, self.value)
 
 
 
@@ -132,4 +132,8 @@ class Cache:
 
 
     def count(self, cache_filter=None):
+        raise NotImplementedError()
+
+
+    def set_block(self, block, tx):
         raise NotImplementedError()

@@ -67,6 +67,7 @@ class TestIntegrateBase(TestShepBase):
     def test_state_defer(self):
         hx = os.urandom(4).hex()
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.reserve(hx)
         self.store.fail(hx)
         v = self.store.deferred()
         self.assertEqual(len(v), 1)
@@ -76,9 +77,11 @@ class TestIntegrateBase(TestShepBase):
     def test_state_multiple(self):
         hx = os.urandom(4).hex()
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.reserve(hx)
         self.store.fail(hx)
         hx = os.urandom(8).hex()
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.reserve(hx)
         self.store.fail(hx)
         v = self.store.deferred()
         self.assertEqual(len(v), 2)
@@ -87,12 +90,14 @@ class TestIntegrateBase(TestShepBase):
     def test_state_multiple_sort(self):
         hx = os.urandom(4).hex()
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.reserve(hx)
         self.store.fail(hx)
         hx = os.urandom(4).hex()
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.enqueue(hx)
         hx = os.urandom(4).hex()
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.reserve(hx)
         self.store.fail(hx)
         hx = os.urandom(4).hex()
         self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
@@ -103,12 +108,14 @@ class TestIntegrateBase(TestShepBase):
     def test_state_date_threshold(self):
         hx = os.urandom(4).hex()
         s = self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.reserve(hx)
         self.store.fail(hx)
         then = self.store.modified(s)
         time.sleep(0.1)
 
         hx = os.urandom(4).hex()
         s = self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.reserve(hx)
         self.store.fail(hx)
 
         v = self.store.deferred(threshold=then)
