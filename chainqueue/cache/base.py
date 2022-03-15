@@ -33,6 +33,7 @@ class CacheTx:
         self.tx_index = None
         self.timestamp = None
 
+        self.src = None
         self.chain_spec = chain_spec
 
 
