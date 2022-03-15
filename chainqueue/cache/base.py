@@ -16,13 +16,12 @@ class NoopNormalizer:
     def noop(self, v):
         return v
 
-
 noop_normalizer = NoopNormalizer()
 
 
 class CacheTx:
 
-    def __init__(self, normalizer=noop_normalizer):
+    def __init__(self, chain_spec, normalizer=noop_normalizer):
         self.normalizer = normalizer
         self.sender = None
         self.recipient = None
@@ -33,6 +32,8 @@ class CacheTx:
         self.block_number = None
         self.tx_index = None
         self.timestamp = None
+
+        self.chain_spec = chain_spec
 
 
     def confirm(self, block_number, tx_index, timestamp):
@@ -65,8 +66,8 @@ class CacheTx:
 
 class CacheTokenTx(CacheTx):
 
-    def __init__(self, normalizer=noop_normalizer):
-        super(CacheTokenTx, self).__init__(normalizer=normalizer)
+    def __init__(self, chain_spec, normalizer=noop_normalizer):
+        super(CacheTokenTx, self).__init__(chain_spec, normalizer=normalizer)
         self.v_src_token = None
         self.v_src_value = None
         self.v_dst_token = None

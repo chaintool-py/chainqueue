@@ -52,7 +52,7 @@ class TestCache(TestShepBase):
     def test_cache_instance(self):
         normalizer = MockNormalizer()
         a = b'foo'
-        tx = MockCacheTokenTx(normalizer=normalizer)
+        tx = MockCacheTokenTx(self.chain_spec, normalizer=normalizer)
         tx.deserialize(a)
         self.assertTrue(isinstance(tx.value, float))
         self.assertEqual(tx.sender[:4], 'addr')
@@ -62,7 +62,7 @@ class TestCache(TestShepBase):
 
     def test_cache_putget(self):
         a = b'foo'
-        tx = MockCacheTokenTx()
+        tx = MockCacheTokenTx(self.chain_spec)
         tx.deserialize(a)
         self.cache.put(self.chain_spec, tx)
         tx_retrieved = self.cache.get(self.chain_spec, tx.hash)

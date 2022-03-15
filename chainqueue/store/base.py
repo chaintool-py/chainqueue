@@ -42,7 +42,7 @@ class Store:
 
 
     def put(self, v, cache_adapter=CacheTx):
-        tx = cache_adapter()
+        tx = cache_adapter(self.chain_spec)
         tx.deserialize(v)
         k = tx.hash
         n = self.counter.next()
