@@ -8,6 +8,9 @@ from hexathon import (
         uniform,
         )
 
+# local imports
+from chainqueue.cache import CacheTx
+
 logg = logging.getLogger(__name__)
 
 
@@ -18,13 +21,15 @@ def normalize_hex(k):
 
 class QueueEntry:
 
-    def __init__(self, store, tx_hash):
+    def __init__(self, store, tx_hash=None, cache_adapter=CacheTx):
         self.store = store
-        self.tx_hash = normalize_hex(tx_hash)
+        #self.tx_hash = normalize_hex(tx_hash)
+        self.tx_hash = tx_hash
         self.signed_tx = None
         self.seq = None
         self.k = None
         self.synced = False
+        self.cache_adapter = cache_adapter
 
 
     def serialize(self):
@@ -33,8 +38,10 @@ class QueueEntry:
 
     def create(self, signed_tx):
         signed_tx = normalize_hex(signed_tx)
-        self.k = self.store.put(self.tx_hash, signed_tx)
+        (s, tx_hash) = self.store.put(signed_tx, cache_adapter=self.cache_adapter)
+        self.k = s
         self.synced = True
+        return tx_hash
 
 
     def load(self):

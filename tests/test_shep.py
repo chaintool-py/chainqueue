@@ -15,6 +15,7 @@ from chainqueue import QueueEntry
 
 # test imports
 from tests.base_shep import TestShepBase
+from tests.common import MockCacheTokenTx
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
@@ -27,13 +28,12 @@ class TestShep(TestShepBase):
 
 
     def test_shep_tx(self):
-        tx_hash = add_0x(os.urandom(20).hex())
         signed_tx = add_0x(os.urandom(128).hex())
         nonce = 42
-        tx = QueueEntry(self.store, tx_hash)
-        tx.create(signed_tx)
+        tx = QueueEntry(self.store, cache_adapter=MockCacheTokenTx)
+        tx_hash = tx.create(signed_tx)
 
-        tx_retrieved = QueueEntry(self.store, tx_hash)
+        tx_retrieved = QueueEntry(self.store, tx_hash=tx_hash)
         tx_retrieved.load()
         self.assertEqual(tx_retrieved.signed_tx, strip_0x(signed_tx))
 
@@ -52,7 +52,7 @@ class TestShep(TestShepBase):
    
 
     def test_shep_cache(self):
-        self.store.put('foo', 'bar')
+        self.store.put('bar', cache_adapter=MockCacheTokenTx)
 
 
 if __name__ == '__main__':

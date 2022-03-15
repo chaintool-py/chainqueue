@@ -41,17 +41,18 @@ class Store:
             setattr(self, v, getattr(self.state_store, v))
 
 
-    def put(self, k, v, cache_adapter=CacheTx):
+    def put(self, v, cache_adapter=CacheTx):
+        tx = cache_adapter()
+        tx.deserialize(v)
+        k = tx.hash
         n = self.counter.next()
         t = datetime.datetime.now().timestamp()
         s = to_key(t, n, k)
         self.state_store.put(s, v)
         self.index_store.put(k, s)
         if self.cache != None:
-            tx = cache_adapter()
-            tx.deserialize(v)
             self.cache.put(self.chain_spec, tx) 
-        return s
+        return (s, k,)
 
 
     def get(self, k):

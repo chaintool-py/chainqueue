@@ -42,20 +42,18 @@ class TestIntegrateBase(TestShepBase):
 
 
     def test_integration_valid(self):
-        self.store.put(os.urandom(4).hex(), os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
 
     
     def test_state_default(self):
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         v = self.store.pending()
         self.assertEqual(len(v), 1)
         self.assertEqual(v[0], hx)
 
 
     def test_state_enqueue(self):
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.get(hx)
         self.store.enqueue(hx)
         v = self.store.upcoming()
@@ -65,8 +63,7 @@ class TestIntegrateBase(TestShepBase):
 
 
     def test_state_defer(self):
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.reserve(hx)
         self.store.fail(hx)
         v = self.store.deferred()
@@ -75,12 +72,11 @@ class TestIntegrateBase(TestShepBase):
 
 
     def test_state_multiple(self):
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.reserve(hx)
         self.store.fail(hx)
-        hx = os.urandom(8).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+      
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.reserve(hx)
         self.store.fail(hx)
         v = self.store.deferred()
@@ -88,33 +84,30 @@ class TestIntegrateBase(TestShepBase):
 
 
     def test_state_multiple_sort(self):
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.reserve(hx)
         self.store.fail(hx)
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+       
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.enqueue(hx)
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.reserve(hx)
         self.store.fail(hx)
-        hx = os.urandom(4).hex()
-        self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+
+        self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         v = self.store.deferred()
         self.assertEqual(len(v), 2)
 
 
     def test_state_date_threshold(self):
-        hx = os.urandom(4).hex()
-        s = self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.reserve(hx)
         self.store.fail(hx)
         then = self.store.modified(s)
         time.sleep(0.1)
 
-        hx = os.urandom(4).hex()
-        s = self.store.put(hx, os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
+        (s, hx) = self.store.put(os.urandom(8).hex(), cache_adapter=MockCacheTokenTx)
         self.store.reserve(hx)
         self.store.fail(hx)
 
