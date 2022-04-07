@@ -76,7 +76,7 @@ def create(chain_spec, nonce, holder_address, tx_hash, signed_tx, obsolete_prede
 
     session.commit()
     SessionBase.release_session(session)
-    logg.debug('queue created nonce {} from {} hash {}'.format(nonce, holder_address, tx_hash))
+    logg.debug('queue created nonce {} from {} hash {} tx {}'.format(nonce, holder_address, tx_hash, signed_tx))
     return tx_hash
 
 

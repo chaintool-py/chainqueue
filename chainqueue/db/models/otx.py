@@ -168,11 +168,10 @@ class Otx(SessionBase):
             status = status_str(self.status)
             SessionBase.release_session(session)
             raise TxStateChangeError('FUBAR cannot be set on an entry with an error state already set ({})'.format(status))
-        if not self.status & StatusBits.RESERVED:
-            status = status_str(self.status)
-            SessionBase.release_session(session)
-            raise TxStateChangeError('FUBAR on tx that has not been RESERVED ({})'.format(status))
-
+#        if not self.status & StatusBits.RESERVED:
+#            status = status_str(self.status)
+#            SessionBase.release_session(session)
+#            raise TxStateChangeError('FUBAR on tx that has not been RESERVED ({})'.format(status))
 
         self.__set_status(StatusBits.UNKNOWN_ERROR | StatusBits.FINAL, session)
         self.__reset_status(StatusBits.QUEUED | StatusBits.RESERVED, session)
