@@ -6,6 +6,7 @@ import logging
 # local imports
 from chainqueue.cache import CacheTx
 from chainqueue.entry import QueueEntry
+from chainqueue.error import NotLocalTxError
 
 logg = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class Store:
                 'modified',
                 ]:
             setattr(self, v, getattr(self.state_store, v))
+        self.state_store.sync()
 
 
     def put(self, v, cache_adapter=CacheTx):
@@ -59,7 +61,10 @@ class Store:
 
 
     def get(self, k):
-        s = self.index_store.get(k)
+        try:
+            s = self.index_store.get(k)
+        except FileNotFoundError:
+            raise NotLocalTxError(k)
         v = self.state_store.get(s)
         return (s, v,)
 
@@ -128,7 +133,6 @@ class Store:
     def final(self, k, block, tx, error=False):
         entry = QueueEntry(self, k)
         entry.load()
-        logg.debug('entry {} {}'.format(k, entry.k))
         if error:
             entry.fail(block, tx)
         else:
