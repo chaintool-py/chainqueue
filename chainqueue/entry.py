@@ -115,7 +115,8 @@ class QueueEntry:
     def fail(self, block, tx):
         if self.__match_state(self.store.NETWORK_ERROR):
             return
-        self.store.set(self.k, self.store.NETWORK_ERROR)
+        v = self.store.state(self.k)
+        self.store.change(self.k, v | self.store.NETWORK_ERROR, self.store.QUEUED)
         if self.store.cache:
             self.store.cache.set_block(self.tx_hash, block, tx)
 

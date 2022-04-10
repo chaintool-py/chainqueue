@@ -2,6 +2,7 @@
 import tempfile
 import unittest
 import shutil
+import logging
 
 # external imports
 from shep.store.file import SimpleFileStoreFactory
@@ -19,6 +20,7 @@ from tests.common import (
         MockContentStore,
         )
 
+logg = logging.getLogger(__name__)
 
 class TestShepBase(unittest.TestCase):
 
@@ -30,6 +32,7 @@ class TestShepBase(unittest.TestCase):
         counter = MockCounter()
         chain_spec = ChainSpec('foo', 'bar', 42, 'baz')
         self.store = Store(chain_spec, self.state, content_store, counter)
+        logg.debug('using path {}'.format(self.path))
 
 
     def tearDown(self):

@@ -1,10 +1,13 @@
 # standard imports
 import re
 import datetime
+import logging
 
 # local imports
 from chainqueue.cache import CacheTx
 from chainqueue.entry import QueueEntry
+
+logg = logging.getLogger(__name__)
 
 
 def to_key(t, n, k):
@@ -125,6 +128,7 @@ class Store:
     def final(self, k, block, tx, error=False):
         entry = QueueEntry(self, k)
         entry.load()
+        logg.debug('entry {} {}'.format(k, entry.k))
         if error:
             entry.fail(block, tx)
         else:

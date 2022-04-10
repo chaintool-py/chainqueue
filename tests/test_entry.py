@@ -5,6 +5,8 @@ import unittest
 
 # external imports
 from hexathon import add_0x
+from chainlib.tx import Tx
+from chainlib.block import Block
 
 # local imports
 from chainqueue import QueueEntry
@@ -58,6 +60,26 @@ class TestEntry(TestShepBase):
         txs = self.store.by_state(state=self.store.IN_NETWORK, strict=True)
         self.assertEqual(len(txs), 1)
 
+
+    def test_entry_change(self):
+        signed_tx = add_0x(os.urandom(128).hex())
+        nonce = 42
+        entry = QueueEntry(self.store, cache_adapter=MockCacheTokenTx)
+        tx_hash = entry.create(signed_tx)
+
+        block = Block()
+        block.number = 13
+        tx = Tx(None)
+        tx.index = 666
+
+        entry.readysend()
+        entry.reserve()
+        entry.sendfail()
+
+        entry = QueueEntry(self.store, tx_hash, cache_adapter=MockCacheTokenTx)
+        entry.load()
+        self.assertEqual(str(entry), tx_hash + ': SENDFAIL')
+       
 
 if __name__ == '__main__':
     unittest.main()
