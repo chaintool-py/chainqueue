@@ -6,7 +6,9 @@ import logging
 # local imports
 from chainqueue.cache import CacheTx
 from chainqueue.entry import QueueEntry
-from chainqueue.error import NotLocalTxError
+from chainqueue.error import (
+        NotLocalTxError,
+        )
 
 logg = logging.getLogger(__name__)
 
@@ -53,8 +55,8 @@ class Store:
         n = self.counter.next()
         t = datetime.datetime.now().timestamp()
         s = to_key(t, n, k)
-        self.state_store.put(s, v)
         self.index_store.put(k, s)
+        self.state_store.put(s, v)
         if self.cache != None:
             self.cache.put(self.chain_spec, tx) 
         return (s, k,)

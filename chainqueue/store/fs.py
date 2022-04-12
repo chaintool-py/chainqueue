@@ -5,6 +5,9 @@ import logging
 # external imports
 from leveldir.hex import HexDir
 
+# local imports
+from chainqueue.error import DuplicateTxError
+
 logg = logging.getLogger(__name__)
 
 
@@ -14,10 +17,21 @@ class IndexStore(HexDir):
         os.path.join(root_path, 'contents')
         self.store = HexDir(root_path, digest_bytes)
 
+    
+    def __exists(self, k):
+        existing = None
+        try:
+            existing = self.get(k)
+        except FileNotFoundError:
+            pass
+        return existing != None
+
 
     def put(self, k, v):
         kb = bytes.fromhex(k)
         vb = v.encode('utf-8')
+        if self.__exists(k):
+            raise DuplicateTxError(k)
         self.store.add(kb, vb)
 
 

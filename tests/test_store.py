@@ -12,6 +12,7 @@ from chainqueue.store.fs import (
         IndexStore,
         CounterStore,
         )
+from chainqueue.error import DuplicateTxError
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -46,6 +47,15 @@ class TestStoreImplementations(unittest.TestCase):
         store = CounterStore(self.path)
         v = store.next()
         self.assertEqual(v, 2)
+
+
+    def test_duplicate(self):
+        store = IndexStore(self.path)
+        hx = os.urandom(32).hex()
+        data = 'foo_bar_baz'
+        store.put(hx, data)
+        with self.assertRaises(DuplicateTxError):
+            store.put(hx, data)
 
 
 if __name__ == '__main__':

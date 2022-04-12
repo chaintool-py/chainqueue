@@ -42,7 +42,6 @@ class StatusEnum(enum.IntEnum):
     """
     PENDING = 0
     """Transaction has been added but no processing has been performed"""
-
     SENDFAIL = StatusBits.DEFERRED | StatusBits.LOCAL_ERROR
     """Temporary error occurred when sending transaction to node"""
     RETRY = StatusBits.QUEUED | StatusBits.DEFERRED 

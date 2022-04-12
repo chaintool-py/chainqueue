@@ -29,3 +29,8 @@ class BackendIntegrityError(ChainQueueException):
     """
     pass
 
+
+class DuplicateTxError(ChainQueueException):
+    """Backend already knows transaction
+    """
+    pass
