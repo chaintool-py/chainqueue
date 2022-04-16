@@ -153,8 +153,9 @@ def get_nonce_tx_cache(chain_spec, nonce, sender, decoder=None, session=None):
 
     return txs
 
-
-def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, decoder=None):
+# TODO: Query for all noncea that are not yet finalized
+# select otx.nonce, bit_or(status) as statusaggr from otx inner join tx_cache on otx.id = tx_cache.otx_id where sender = '9d8ce82642c18eb141b269cbc12870a1d2cc3a1f' group by otx.nonce having bit_or(status) & 4096 = 0;
+def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, decoder=None, exclude_obsolete=True):
     """Returns not finalized transactions that have been attempted sent without success.
 
     :param chain_spec: Chain spec for transaction network
@@ -182,10 +183,12 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
         q = q.join(TxCache)
     else:
         q = q.filter(Otx.status>StatusEnum.PENDING.value)
-        q = q.filter(not_(Otx.status.op('&')(StatusBits.IN_NETWORK.value)>0))
-
+        q = q.filter(not_(Otx.status.op('&')(StatusBits.IN_NETWORK.value)==0))
+        q = q.filter(not_(Otx.status.op('&')(StatusBits.FINAL.value)==0))
     if sender != None:
         q = q.filter(TxCache.sender==sender)
+    if exclude_obsolete:
+        q = q.filter(not_(Otx.status.op('&')(StatusBits.OBSOLETE.value)==0))
 
     txs = {}
     gas = 0
@@ -340,7 +343,7 @@ def get_upcoming_tx(chain_spec, status=StatusEnum.READYSEND, not_status=None, re
     return txs
 
 
-def sql_range_filter(session, criteria=None):
+def sql_range_filter(session, criteria=None, numeric_column='id'):
     """Convert an arbitrary type to a sql query range
 
     :param session: Backend state integrity session
@@ -356,17 +359,30 @@ def sql_range_filter(session, criteria=None):
     if criteria == None:
         return None
 
+    original_criteria = criteria
+
+    if isinstance(criteria, str):
+        try:
+            criteria = datetime.datetime.fromisoformat(criteria)
+        except ValueError:
+            pass
+
+    typ_str = 'hash'
     if isinstance(criteria, str):
         q = session.query(Otx)
         q = q.filter(Otx.tx_hash==strip_0x(criteria))
         r = q.first()
         if r == None:
             raise NotLocalTxError('unknown tx hash as bound criteria specified: {}'.format(criteria))
-        boundary = ('id', r.id,)
+        boundary = (numeric_column, getattr(r, numeric_column),)
     elif isinstance(criteria, int):
-        boundary = ('id', criteria,)
+        boundary = (numeric_column, criteria,)
+        typ_str = numeric_column
     elif isinstance(criteria, datetime.datetime):
         boundary = ('date', criteria,)   
+        typ_str = 'datetime'
+
+    logg.debug('sql range specifier {} interpreted as {}: {}'.format(original_criteria, typ_str, str(criteria)))
 
     return boundary
 
@@ -414,8 +430,8 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
     session = SessionBase.bind_session(session)
 
     try:
-        filter_offset = sql_range_filter(session, criteria=since)
-        filter_limit = sql_range_filter(session, criteria=until)
+        filter_offset = sql_range_filter(session, criteria=since, numeric_column='nonce')
+        filter_limit = sql_range_filter(session, criteria=until, numeric_column='nonce')
     except NotLocalTxError as e:
         logg.error('query build failed: {}'.format(e))
         return {}
@@ -432,12 +448,16 @@ def get_account_tx(chain_spec, address, as_sender=True, as_recipient=True, count
     if filter_offset != None:
         if filter_offset[0] == 'id':
             q = q.filter(Otx.id>=filter_offset[1])
+        elif filter_offset[0] == 'nonce':
+            q = q.filter(Otx.nonce>=filter_offset[1])
         elif filter_offset[0] == 'date':
             q = q.filter(Otx.date_created>=filter_offset[1])
 
     if filter_limit != None:
         if filter_limit[0] == 'id':
             q = q.filter(Otx.id<=filter_limit[1])
+        elif filter_limit[0] == 'nonce':
+            q = q.filter(Otx.nonce<=filter_limit[1])
         elif filter_limit[0] == 'date':
             q = q.filter(Otx.date_created<=filter_limit[1])
 
@@ -486,8 +506,8 @@ def get_latest_txs(chain_spec,  count=10, since=None, until=None, status=None, n
     session = SessionBase.bind_session(session)
 
     try:
-        filter_offset = sql_range_filter(session, criteria=since)
-        filter_limit = sql_range_filter(session, criteria=until)
+        filter_offset = sql_range_filter(session, criteria=since, numeric_column='nonce')
+        filter_limit = sql_range_filter(session, criteria=until, numeric_column='nonce')
     except NotLocalTxError as e:
         logg.error('query build failed: {}'.format(e))
         return {}
@@ -498,12 +518,16 @@ def get_latest_txs(chain_spec,  count=10, since=None, until=None, status=None, n
     if filter_offset != None:
         if filter_offset[0] == 'id':
             q = q.filter(Otx.id>=filter_offset[1])
+        if filter_offset[0] == 'nonce':
+            q = q.filter(Otx.nonce>=filter_offset[1])
         elif filter_offset[0] == 'date':
             q = q.filter(Otx.date_created>=filter_offset[1])
 
     if filter_limit != None:
         if filter_limit[0] == 'id':
             q = q.filter(Otx.id<=filter_limit[1])
+        elif filter_limit[0] == 'nonce':
+            q = q.filter(Otx.nonce<=filter_limit[1])
         elif filter_limit[0] == 'date':
             q = q.filter(Otx.date_created<=filter_limit[1])
 

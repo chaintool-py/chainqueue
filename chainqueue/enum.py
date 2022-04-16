@@ -1,5 +1,6 @@
 # standard imports
 import enum
+import re
 
 
 @enum.unique
@@ -73,6 +74,13 @@ class StatusEnum(enum.IntEnum):
     """Execution of transaction on network completed and was unsuccessful."""
     SUCCESS = StatusBits.IN_NETWORK | StatusBits.FINAL 
     """Execution of transaction on network completed and was successful"""
+
+
+status_mask = 0
+r_bitmask = '^[A-Z][A-Z_]*$'
+for v in dir(StatusBits):
+    if re.match(r_bitmask, v):
+        status_mask |= getattr(StatusBits, v).value
 
 
 def status_str(v, bits_only=False):
@@ -189,3 +197,7 @@ def is_alive(v):
     :rtype: bool
     """
     return bool(v & dead() == 0)
+
+
+def status_all():
+    return status_mask
