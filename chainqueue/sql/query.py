@@ -185,10 +185,10 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
         q = q.filter(Otx.status>StatusEnum.PENDING.value)
         q = q.filter(not_(Otx.status.op('&')(StatusBits.IN_NETWORK.value)==0))
         q = q.filter(not_(Otx.status.op('&')(StatusBits.FINAL.value)==0))
-    if exclude_obsolete:
-        q = q.filter(not_(Otx.status.op('&')(StatusBits.OBSOLETE.value)==0))
     if sender != None:
         q = q.filter(TxCache.sender==sender)
+    if exclude_obsolete:
+        q = q.filter(Otx.status.op('&')(StatusBits.OBSOLETE.value)==0)
 
     txs = {}
     gas = 0
