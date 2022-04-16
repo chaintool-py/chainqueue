@@ -424,3 +424,33 @@ def obsolete_by_cache(chain_spec, tx_hash, final, session=None):
     SessionBase.release_session(session)
 
     return tx_hash
+
+
+def set_checked(chain_spec, tx_hash, session=None):
+    """Set the checked date for the transaction to current datetime
+
+    :param chain_spec: Chain spec for transaction network
+    :type chain_spec: chainlib.chain.ChainSpec
+    :param tx_hash: Transaction hash of record to modify
+    :type tx_hash: str, 0x-hex
+    :param session: Backend state integrity session
+    :type session: varies
+    :raises NotLocalTxError: If transaction not found in queue.
+    :rtype: str
+    :returns: Transaction hash, in hex
+    """
+
+    session = SessionBase.bind_session(session)
+    o = TxCache.load(tx_hash, session=session)
+    if o == None:
+        SessionBase.release_session(session)
+        raise NotLocalTxError('queue does not contain tx hash {}'.format(tx_hash))
+
+    session.flush()
+
+    o.check()
+    session.add(o)
+    session.commit()
+    SessionBase.release_session(session)
+
+    return tx_hash

@@ -185,10 +185,10 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
         q = q.filter(Otx.status>StatusEnum.PENDING.value)
         q = q.filter(not_(Otx.status.op('&')(StatusBits.IN_NETWORK.value)==0))
         q = q.filter(not_(Otx.status.op('&')(StatusBits.FINAL.value)==0))
-    if sender != None:
-        q = q.filter(TxCache.sender==sender)
     if exclude_obsolete:
         q = q.filter(not_(Otx.status.op('&')(StatusBits.OBSOLETE.value)==0))
+    if sender != None:
+        q = q.filter(TxCache.sender==sender)
 
     txs = {}
     gas = 0
@@ -210,7 +210,7 @@ def get_paused_tx_cache(chain_spec, status=None, sender=None, session=None, deco
     return txs
 
 
-def get_status_tx_cache(chain_spec, status, not_status=None, before=None, exact=False, limit=0, session=None, decoder=None):
+def get_status_tx_cache(chain_spec, status, not_status=None, before=None, exact=False, compare_checked=False, limit=0, session=None, decoder=None):
     """Retrieve transaction with a specific queue status.
 
     :param chain_spec: Chain spec for transaction network
@@ -235,7 +235,10 @@ def get_status_tx_cache(chain_spec, status, not_status=None, before=None, exact=
     q = session.query(Otx)
     q = q.join(TxCache)
     if before != None:
-        q = q.filter(Otx.date_updated<before)
+        if compare_checked:
+            q = q.filter(Otx.date_updated<before)
+        else:
+            q = q.filter(TxCache.date_checked<before)
     if exact:
         q = q.filter(Otx.status==status)
     else:
