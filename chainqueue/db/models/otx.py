@@ -238,9 +238,11 @@ class Otx(SessionBase):
             SessionBase.release_session(session)
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry with FINAL state set ({})'.format(status))
         if self.status & StatusBits.IN_NETWORK:
+            status = status_str(self.status)
             SessionBase.release_session(session)
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry already IN_NETWORK ({})'.format(status))
         if self.status & StatusBits.OBSOLETE:
+            status = status_str(self.status)
             SessionBase.release_session(session)
             raise TxStateChangeError('OVERRIDDEN/OBSOLETED cannot be set on an entry already OBSOLETE ({})'.format(status))
 
