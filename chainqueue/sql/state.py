@@ -405,7 +405,7 @@ def obsolete_by_cache(chain_spec, tx_hash, final, session=None):
     q = q.join(TxCache)
     q = q.filter(Otx.nonce==nonce)
     q = q.filter(TxCache.sender==sender)
-    q = q.filter(Otx.tx_hash!=strip_0x(tx_hash))
+    q = q.filter(Otx.id!=otxid)
 
     for otwo in q.all():
         try:
