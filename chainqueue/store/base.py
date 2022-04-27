@@ -67,6 +67,7 @@ class Store:
             s = self.index_store.get(k)
         except FileNotFoundError:
             raise NotLocalTxError(k)
+        self.state_store.sync()
         v = self.state_store.get(s)
         return (s, v,)
 
