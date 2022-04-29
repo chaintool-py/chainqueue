@@ -134,6 +134,10 @@ class QueueEntry:
             self.store.cache.set_block(self.tx_hash, block, tx)
 
 
+    def test(self, state):
+        return self.__match_state(state)
+
+
     def __str__(self):
         v = self.store.get(self.tx_hash)
         n = self.store.state(v[0])

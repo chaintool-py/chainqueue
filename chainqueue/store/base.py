@@ -153,3 +153,9 @@ class Store:
         entry = QueueEntry(self, k)
         entry.load()
         entry.sent()
+
+
+    def is_reserved(self, k):
+        entry = QueueEntry(self, k)
+        entry.load()
+        return entry.test(self.RESERVED)
