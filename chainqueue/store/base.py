@@ -8,6 +8,7 @@ from chainqueue.cache import CacheTx
 from chainqueue.entry import QueueEntry
 from chainqueue.error import (
         NotLocalTxError,
+        BackendIntegrityError,
         )
 from chainqueue.enum import (
         StatusBits,
@@ -50,7 +51,17 @@ class Store:
                 'modified',
                 ]:
             setattr(self, v, getattr(self.state_store, v))
-        self.state_store.sync()
+
+        sync_err = None
+        for i in range(2):
+            try:
+                self.state_store.sync()
+            except Exception as e:
+                sync_err = e
+                continue
+
+        if sync_err != None:
+            raise BackendIntegrityError(sync_err)
 
 
     def put(self, v, cache_adapter=CacheTx):
@@ -68,12 +79,17 @@ class Store:
 
 
     def get(self, k):
-        try:
+        v = None
+        for i in range(2):
             s = self.index_store.get(k)
-        except FileNotFoundError:
+            try:
+                self.state_store.sync()
+                v = self.state_store.get(s)
+            except FileNotFoundError:
+                continue
+            break
+        if v == None:
             raise NotLocalTxError(k)
-        self.state_store.sync()
-        v = self.state_store.get(s)
         return (s, v,)
 
 
@@ -184,3 +200,7 @@ class Store:
         entry = QueueEntry(self, k)
         entry.load()
         return entry.test(self.RESERVED)
+
+
+    def sync(self):
+        self.state_store.sync()
