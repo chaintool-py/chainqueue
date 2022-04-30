@@ -9,6 +9,10 @@ from chainqueue.entry import QueueEntry
 from chainqueue.error import (
         NotLocalTxError,
         )
+from chainqueue.enum import (
+        StatusBits,
+        all_errors,
+        )
 
 logg = logging.getLogger(__name__)
 
@@ -21,6 +25,7 @@ def from_key(k):
     (ts_str, seq_str, tx_hash) = k.split('_')
     return (float(ts_str), int(seq_str), tx_hash, )
 
+all_local_errors = all_errors() - StatusBits.NETWORK_ERROR
 
 re_u = r'^[^_][_A-Z]+$'
 class Store:
@@ -94,7 +99,9 @@ class Store:
 
             hashes.append(hsh)
 
-
+            i += 1
+            if limit > 0 and i == limit:
+                break
 
         hashes.sort()
         return hashes
@@ -106,6 +113,17 @@ class Store:
 
     def deferred(self, limit=4096, threshold=None):
         return self.by_state(state=self.DEFERRED, limit=limit, threshold=threshold)
+
+
+    def failed(self, limit=4096):
+        #return self.by_state(state=all_local_errors, limit=limit)
+        r = []
+        r += self.by_state(state=self.LOCAL_ERROR, limit=limit)
+        r += self.by_state(state=self.NODE_ERROR, limit=limit)
+        r.sort()
+        if len(r) > limit:
+            r = r[:limit]
+        return r
 
 
     def pending(self, limit=4096):
@@ -130,6 +148,7 @@ class Store:
     def fail(self, k):
         entry = QueueEntry(self, k)
         entry.load()
+        logg.debug('fail {}'.format(k))
         entry.sendfail()
 
 
