@@ -77,20 +77,26 @@ class Store:
         return (s, v,)
 
 
-    def by_state(self, state=0, limit=4096, strict=False, threshold=None):
+    def by_state(self, state=0, not_state=0, limit=4096, strict=False, threshold=None):
         hashes = []
         i = 0
 
         refs_state = self.state_store.list(state)
+        refs_state.sort()
         
         for ref in refs_state:
             v = from_key(ref)
             hsh = v[2]
 
+            item_state = self.state_store.state(ref)
+
             if strict:
-                item_state = self.state_store.state(ref)
                 if item_state & state != item_state:
                     continue
+
+            logg.info('state {} {}'.format(ref, item_state))
+            if item_state & not_state > 0:
+                continue
 
             if threshold != None:
                 v = self.state_store.modified(ref)
