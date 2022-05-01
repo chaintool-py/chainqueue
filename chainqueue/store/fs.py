@@ -64,7 +64,7 @@ class CounterStore:
     
         v = f.read(8)
         self.count = int.from_bytes(v, byteorder='big')
-        logg.info('counter starts at {}'.format(self.count))
+        logg.debug('counter starts at {}'.format(self.count))
     
         f.seek(0)
 
