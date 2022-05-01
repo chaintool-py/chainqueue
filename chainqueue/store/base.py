@@ -2,6 +2,7 @@
 import re
 import datetime
 import logging
+import time
 
 # local imports
 from chainqueue.cache import CacheTx
@@ -31,6 +32,8 @@ all_local_errors = all_errors() - StatusBits.NETWORK_ERROR
 re_u = r'^[^_][_A-Z]+$'
 class Store:
 
+    race_delay = 0.1
+
     def __init__(self, chain_spec, state_store, index_store, counter, cache=None):
         self.chain_spec = chain_spec
         self.cache = cache
@@ -58,6 +61,7 @@ class Store:
                 self.state_store.sync()
             except Exception as e:
                 sync_err = e
+                time.sleep(self.race_delay)
                 continue
 
         if sync_err != None:
