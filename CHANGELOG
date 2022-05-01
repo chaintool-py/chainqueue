@@ -1,3 +1,12 @@
+- 0.1.6
+	* Sort upcoming queue item chronologically
+	* Add unit testing for upcoming query method
+- 0.1.5
+	* Add reserved state check method
+- 0.1.4
+	* Dependency cleanups
+- 0.1.3
+	* Add CLI args and config handling, settings object
 - 0.1.2
 	* Add CLI inspection tools
 - 0.1.1

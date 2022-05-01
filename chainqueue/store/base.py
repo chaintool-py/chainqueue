@@ -7,10 +7,7 @@ import time
 # local imports
 from chainqueue.cache import CacheTx
 from chainqueue.entry import QueueEntry
-from chainqueue.error import (
-        NotLocalTxError,
-        BackendIntegrityError,
-        )
+from chainqueue.error import NotLocalTxError
 from chainqueue.enum import (
         StatusBits,
         all_errors,
@@ -31,8 +28,6 @@ all_local_errors = all_errors() - StatusBits.NETWORK_ERROR
 
 re_u = r'^[^_][_A-Z]+$'
 class Store:
-
-    race_delay = 0.1
 
     def __init__(self, chain_spec, state_store, index_store, counter, cache=None):
         self.chain_spec = chain_spec
@@ -56,16 +51,13 @@ class Store:
             setattr(self, v, getattr(self.state_store, v))
 
         sync_err = None
-        for i in range(2):
-            try:
-                self.state_store.sync()
-            except Exception as e:
-                sync_err = e
-                time.sleep(self.race_delay)
-                continue
+        try:
+            self.state_store.sync()
+        except Exception as e:
+            sync_err = e
 
         if sync_err != None:
-            raise BackendIntegrityError(sync_err)
+            raise FileNotFoundError(sync_err)
 
 
     def put(self, v, cache_adapter=CacheTx):
@@ -84,16 +76,15 @@ class Store:
 
     def get(self, k):
         v = None
-        for i in range(2):
-            s = self.index_store.get(k)
-            try:
-                self.state_store.sync()
-                v = self.state_store.get(s)
-            except FileNotFoundError:
-                continue
-            break
+        s = self.index_store.get(k)
+        err = None
+        try:
+            self.state_store.sync()
+            v = self.state_store.get(s)
+        except FileNotFoundError as e:
+            err = e
         if v == None:
-            raise NotLocalTxError(k)
+            raise NotLocalTxError('could not find tx {}: {}'.format(k, err))
         return (s, v,)
 
 

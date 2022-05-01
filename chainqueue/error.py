@@ -24,12 +24,6 @@ class CacheIntegrityError(ChainQueueException):
     pass
 
 
-class BackendIntegrityError(ChainQueueException):
-    """Raised when queue backend has invalid state
-    """
-    pass
-
-
 class DuplicateTxError(ChainQueueException):
     """Backend already knows transaction
     """
