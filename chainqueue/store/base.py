@@ -47,6 +47,7 @@ class Store:
                 'unset',
                 'name',
                 'modified',
+                'purge',
                 ]:
             setattr(self, v, getattr(self.state_store, v))
 
