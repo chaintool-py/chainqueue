@@ -1,3 +1,15 @@
+- 0.1.12
+	* Raise correct exception from index store exists check
+- 0.1.11
+	* Allow for sync skip in store instantiation
+- 0.1.10
+	* Improve logging
+- 0.1.9
+	* Upgrade deps
+- 0.1.8
+	* Upgrade deps
+- 0.1.7 
+	* Improve logging
 - 0.1.6
 	* Sort upcoming queue item chronologically
 	* Add unit testing for upcoming query method

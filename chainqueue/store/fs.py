@@ -6,7 +6,10 @@ import logging
 from leveldir.hex import HexDir
 
 # local imports
-from chainqueue.error import DuplicateTxError
+from chainqueue.error import (
+        DuplicateTxError,
+        NotLocalTxError,
+        )
 
 logg = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ class IndexStore(HexDir):
         existing = None
         try:
             existing = self.get(k)
-        except FileNotFoundError:
+        except NotLocalTxError:
             pass
         return existing != None
 
@@ -37,7 +40,14 @@ class IndexStore(HexDir):
 
     def get(self, k):
         fp = self.store.to_filepath(k)
-        f = open(fp, 'rb')
+        f = None
+        err = None
+        try:
+            f = open(fp, 'rb')
+        except FileNotFoundError as e:
+            err = e
+        if err != None:
+            raise NotLocalTxError(err)
         v = f.read()
         f.close()
         return v.decode('utf-8')
