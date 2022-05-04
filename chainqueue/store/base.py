@@ -29,7 +29,7 @@ all_local_errors = all_errors() - StatusBits.NETWORK_ERROR
 re_u = r'^[^_][_A-Z]+$'
 class Store:
 
-    def __init__(self, chain_spec, state_store, index_store, counter, cache=None):
+    def __init__(self, chain_spec, state_store, index_store, counter, cache=None, sync=True):
         self.chain_spec = chain_spec
         self.cache = cache
         self.state_store = state_store
@@ -50,6 +50,9 @@ class Store:
                 'purge',
                 ]:
             setattr(self, v, getattr(self.state_store, v))
+
+        if not sync:
+            return
 
         sync_err = None
         try:
@@ -106,9 +109,11 @@ class Store:
                 if item_state & state != item_state:
                     continue
 
-            logg.info('state {} {}'.format(ref, item_state))
             if item_state & not_state > 0:
                 continue
+
+            item_state_str = self.state_store.name(item_state)
+            logg.info('state {} {} ({})'.format(ref, item_state_str, item_state))
 
             if threshold != None:
                 v = self.state_store.modified(ref)
