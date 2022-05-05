@@ -1,3 +1,5 @@
+- 0.1.14
+	* Upgrade shep to handle exception in filestore list
 - 0.1.13
 	* Remove sync on each get
 	* Upgrade shep to guarantee atomic state lock state
