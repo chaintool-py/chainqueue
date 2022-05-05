@@ -83,7 +83,6 @@ class Store:
         s = self.index_store.get(k)
         err = None
         try:
-            self.state_store.sync()
             v = self.state_store.get(s)
         except FileNotFoundError as e:
             err = e
