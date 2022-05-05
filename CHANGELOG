@@ -1,5 +1,6 @@
 - 0.1.13
 	* Remove sync on each get
+	* Upgrade shep to guarantee atomic state lock state
 - 0.1.12
 	* Raise correct exception from index store exists check
 - 0.1.11
