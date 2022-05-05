@@ -6,4 +6,4 @@ leveldir~=0.3.0
 confini~=0.6.0
 #pyxdg~=0.27
 chainlib~=0.1.1
-shep~=0.2.6
+shep~=0.2.7
