@@ -1,7 +1,7 @@
 # standard imports
 import logging
 
-# ecxternal imports
+# external imports
 from hexathon import (
         add_0x,
         strip_0x,
@@ -42,6 +42,12 @@ class QueueEntry:
         self.k = s
         self.synced = True
         return tx_hash
+
+
+    def local_state(self):
+        state = self.store.state(self.k)
+        state_str = self.store.name(state)
+        return (state, state_str,)
 
 
     def load(self):
@@ -142,4 +148,4 @@ class QueueEntry:
         v = self.store.get(self.tx_hash)
         n = self.store.state(v[0])
         s = self.store.name(n)
-        return '{}: {}'.format(self.tx_hash, s)
+        return '{}: {} ({})'.format(self.k, s, n)

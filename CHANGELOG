@@ -1,3 +1,8 @@
+- 0.1.16
+	* Queue list cli tool
+	* Provide pluggable renderer capability for queue list cli tool
+	* Move path and state query parsing to settings module
+	* Add queue path and digest parameters to base config
 - 0.1.15
 	* Upgrade shep to avoid sync in persist set
 - 0.1.14

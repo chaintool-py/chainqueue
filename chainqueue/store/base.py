@@ -91,13 +91,24 @@ class Store:
         return (s, v,)
 
 
-    def by_state(self, state=0, not_state=0, limit=4096, strict=False, threshold=None):
+    def by_state(self, state=0, not_state=0, include_pending=False, limit=4096, strict=False, threshold=None):
         hashes = []
         i = 0
+  
+        refs_state = []
+        if state > 0:
+            if self.state_store.is_pure(state):
+                refs_state = self.state_store.list(state)
+            elif strict:
+                refs_state = self.state_store.list(state)
+            else:
+                for v in self.state_store.elements(state, numeric=True):
+                    refs_state += self.state_store.list(v)
+        if include_pending:
+            refs_state += self.state_store.list(0)
 
-        refs_state = self.state_store.list(state)
         refs_state.sort()
-        
+
         for ref in refs_state:
             v = from_key(ref)
             hsh = v[2]
@@ -125,7 +136,7 @@ class Store:
             if limit > 0 and i == limit:
                 break
 
-        hashes.sort()
+        #hashes.sort()
         return hashes
 
 

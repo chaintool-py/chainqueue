@@ -4,15 +4,19 @@
 import os
 import logging
 import sys
+import importlib
 
 # external imports
 from hexathon import add_0x
 import chainlib.cli
 from chainlib.chain import ChainSpec
-from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
 
 # local imports
-from chainqueue.cli.output import Outputter
+import chainqueue.cli
+#from chainqueue.cli.output import Outputter
+from chainqueue.settings import ChainqueueSettings
+from chainqueue.store import Store
+from chainqueue.entry import QueueEntry
 
 
 logging.basicConfig(level=logging.WARNING)
@@ -21,30 +25,43 @@ logg = logging.getLogger()
 script_dir = os.path.dirname(os.path.realpath(__file__)) 
 config_dir = os.path.join(script_dir, '..', 'data', 'config')
 
-arg_flags = chainlib.cli.argflag_std_base | chainlib.cli.Flag.CHAIN_SPEC
+arg_flags = chainlib.cli.argflag_std_base | chainlib.cli.Flag.CHAIN_SPEC | chainlib.cli.Flag.UNSAFE
 argparser = chainlib.cli.ArgumentParser(arg_flags)
-argparser.add_argument('--backend', type=str, default='sql', help='Backend to use (currently only "sql")')
-argparser.add_argument('--start', type=str, help='Oldest transaction hash to include in results')
-argparser.add_argument('--end', type=str, help='Newest transaction hash to include in results')
+argparser.add_argument('--backend', type=str, default='sql', help='Backend to use')
+argparser.add_argument('--state-dir', type=str, dest='state_dir', help='Backend to use')
+argparser.add_argument('--tx-digest-size', type=int, dest='tx_digest_size', default=32, help='Size of tx digest in bytes')
+#argparser.add_argument('--session-id', type=str, dest='session_id', help='Session id to list')
+#argparser.add_argument('--start', type=str, help='Oldest transaction to include in results')
+#argparser.add_argument('--end', type=str, help='Newest transaction  to include in results')
 argparser.add_argument('--error', action='store_true', help='Only show transactions which have error state')
-argparser.add_argument('--pending', action='store_true', help='Omit finalized transactions')
-argparser.add_argument('--status-mask', type=int, dest='status_mask', help='Manually specify status bitmask value to match (overrides --error and --pending)')
-argparser.add_argument('--summary', action='store_true', help='output summary for each status category')
-argparser.add_argument('-o', '--column', dest='column', action='append', type=str, help='add a column to display')
+argparser.add_argument('--no-final', action='store_true', dest='no_final', help='Omit finalized transactions')
+argparser.add_argument('--status-mask', type=str, dest='status_mask', action='append', default=[], help='Manually specify status bitmask value to match (overrides --error and --pending)')
+argparser.add_argument('--exact', action='store_true', help='Match status exact')
+argparser.add_argument('--include-pending', action='store_true', dest='include_pending', help='Include transactions in unprocessed state (pending)')
+argparser.add_argument('--renderer', type=str, default=[], action='append', help='Transaction renderer for output')
+#argparser.add_argument('--summary', action='store_true', help='output summary for each status category')
+#argparser.add_argument('-o', '--column', dest='column', action='append', type=str, help='add a column to display')
 argparser.add_positional('address', type=str, help='Ethereum address of recipient')
 args = argparser.parse_args()
 extra_args = {
     'address': None,
     'backend': None,
-    'start': None,
-    'end': None,
+    'state_dir': None,
+    'exact': None,
+#    'tx_digest_size': None,
+#    'start': None,
+#    'end': None,
     'error': None,
-    'pending': None,
+    'include_pending': '_PENDING',
     'status_mask': None,
-    'column': None,
-    'summary': None,
+    'no_final': None,
+    'renderer': None,
+#    'column': None,
+#    'summary': None,
         }
 config = chainlib.cli.Config.from_args(args, arg_flags, extra_args=extra_args, base_config_dir=config_dir)
+config = chainqueue.cli.config.process_config(config, args, 0)
+logg.debug('config loaded:\n{}'.format(config))
 
 chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
 
@@ -58,36 +75,40 @@ if status_mask == None:
 
 tx_getter = None
 tx_lister = None
-session_method = None
-if config.get('_BACKEND') == 'sql':
-    from chainqueue.sql.query import get_account_tx as tx_lister
-    from chainqueue.sql.query import get_tx_cache as tx_getter
-    from chainqueue.runnable.sql import setup_backend
-    from chainqueue.db.models.base import SessionBase
-    setup_backend(config, debug=config.true('DATABASE_DEBUG'))
-    session_method = SessionBase.create_session
-else:
-    raise NotImplementedError('backend {} not implemented'.format(config.get('_BACKEND')))
+#output_cols = config.get('_COLUMN')
 
-output_cols = config.get('_COLUMN')
+renderers_mods = []
+for renderer in config.get('_RENDERER'):
+    m = importlib.import_module(renderer)
+    renderers_mods.append(m)
+    logg.info('using renderer module {}'.format(renderer))
+
+settings = ChainqueueSettings()
+settings.process(config)
+logg.debug('settings:\n{}'.format(settings))
 
 
 def main():
-    since = config.get('_START', None)
-    if since != None:
-        since = add_0x(since)
-    until = config.get('_END', None)
-    if until != None:
-        until = add_0x(until)
-    txs = tx_lister(chain_spec, config.get('_ADDRESS'), since=since, until=until, status=status_mask, not_status=not_status_mask)
-    outputter = Outputter(chain_spec, sys.stdout, tx_getter, session_method=session_method, decode_status=config.true('_RAW'), cols=output_cols)
-    if config.get('_SUMMARY'):
-        for k in txs.keys():
-            outputter.add(k)
-        outputter.decode_summary()
-    else:
-        for k in txs.keys():
-            outputter.decode_single(k)
+#    since = config.get('_START', None)
+#    if since != None:
+#        since = add_0x(since)
+#    until = config.get('_END', None)
+#    if until != None:
+#        until = add_0x(until)
+#    txs = tx_lister(chain_spec, config.get('_ADDRESS'), since=since, until=until, status=status_mask, not_status=not_status_mask)
+    txs = settings.get('QUEUE_STORE').by_state(state=settings.get('QUEUE_STATUS_FILTER'), strict=config.get('_EXACT'), include_pending=config.get('_PENDING'))
+    
+    for i, tx_hash in enumerate(txs):
+        entry = QueueEntry(settings.get('QUEUE_STORE'), tx_hash)
+        entry.load()
+        v = None
+        if len(renderers_mods) == 0:
+            v = str(entry)
+        else:
+            for m in renderers_mods:
+                v = m.apply(i, settings, v, settings.get('CHAIN_SPEC'), entry)
+        print(v)
+
 
 if __name__ == '__main__':
     main()

@@ -105,11 +105,13 @@ class Verify:
 
 
 class Status(shep.persist.PersistedState):
+
+    bits = 12
    
     def __init__(self, store_factory, allow_invalid=False, event_callback=None):
         verify = Verify().verify
         self.set_default_state('PENDING')
-        super(Status, self).__init__(store_factory, 12, verifier=verify, check_alias=not allow_invalid, event_callback=event_callback)
+        super(Status, self).__init__(store_factory, self.bits, verifier=verify, check_alias=not allow_invalid, event_callback=event_callback)
         self.add('QUEUED')
         self.add('RESERVED')
         self.add('IN_NETWORK')
