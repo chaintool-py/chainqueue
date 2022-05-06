@@ -1,5 +1,6 @@
 - 0.1.16
 	* Queue list cli tool
+	* State parser cli tool
 	* Provide pluggable renderer capability for queue list cli tool
 	* Move path and state query parsing to settings module
 	* Add queue path and digest parameters to base config
