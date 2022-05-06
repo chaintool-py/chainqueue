@@ -41,7 +41,7 @@ argparser.add_argument('--include-pending', action='store_true', dest='include_p
 argparser.add_argument('--renderer', type=str, default=[], action='append', help='Transaction renderer for output')
 #argparser.add_argument('--summary', action='store_true', help='output summary for each status category')
 #argparser.add_argument('-o', '--column', dest='column', action='append', type=str, help='add a column to display')
-argparser.add_positional('address', type=str, help='Ethereum address of recipient')
+argparser.add_positional('address', required=False, type=str, help='Ethereum address of recipient')
 args = argparser.parse_args()
 extra_args = {
     'address': None,

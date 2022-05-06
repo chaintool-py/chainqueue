@@ -104,6 +104,7 @@ class Store:
             else:
                 for v in self.state_store.elements(state, numeric=True):
                     refs_state += self.state_store.list(v)
+                refs_state = list(set(refs_state))
         if include_pending:
             refs_state += self.state_store.list(0)
 
