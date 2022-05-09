@@ -32,7 +32,7 @@ class TestEntry(TestShepBase):
         entry = QueueEntry(self.store, cache_adapter=MockCacheTokenTx)
         tx_hash_two = entry.create(signed_tx)
 
-        txs = self.store.by_state()
+        txs = self.store.by_state(include_pending=True)
         self.assertEqual(len(txs), 2)
      
         logg.debug('tx hash one {}'.format(tx_hash_one))
@@ -40,14 +40,14 @@ class TestEntry(TestShepBase):
         entry.load()
         entry.sent()
         
-        txs = self.store.by_state()
+        txs = self.store.by_state(include_pending=True)
         self.assertEqual(len(txs), 1)
 
         txs = self.store.by_state(state=self.store.IN_NETWORK)
         self.assertEqual(len(txs), 1)
 
         entry.succeed(None, None)
-        txs = self.store.by_state()
+        txs = self.store.by_state(include_pending=True)
         self.assertEqual(len(txs), 1)
       
         entry = QueueEntry(self.store, tx_hash_two)
@@ -78,7 +78,7 @@ class TestEntry(TestShepBase):
 
         entry = QueueEntry(self.store, tx_hash, cache_adapter=MockCacheTokenTx)
         entry.load()
-        self.assertEqual(str(entry), tx_hash + ': SENDFAIL')
+        self.assertEqual(str(entry.tx_hash), tx_hash)
        
 
 if __name__ == '__main__':

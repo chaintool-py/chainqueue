@@ -161,7 +161,7 @@ class Store:
 
 
     def pending(self, limit=4096):
-        return self.by_state(state=0, limit=limit, strict=True)
+        return self.by_state(include_pending=True, limit=limit, strict=True)
 
 
     def reserve(self, k):
