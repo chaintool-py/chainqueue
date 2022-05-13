@@ -28,19 +28,12 @@ config_dir = os.path.join(script_dir, '..', 'data', 'config')
 arg_flags = chainlib.cli.argflag_std_base | chainlib.cli.Flag.CHAIN_SPEC | chainlib.cli.Flag.UNSAFE
 argparser = chainlib.cli.ArgumentParser(arg_flags)
 argparser.add_argument('--backend', type=str, default='sql', help='Backend to use')
-argparser.add_argument('--state-dir', type=str, dest='state_dir', help='Backend to use')
-argparser.add_argument('--tx-digest-size', type=int, dest='tx_digest_size', default=32, help='Size of tx digest in bytes')
-#argparser.add_argument('--session-id', type=str, dest='session_id', help='Session id to list')
-#argparser.add_argument('--start', type=str, help='Oldest transaction to include in results')
-#argparser.add_argument('--end', type=str, help='Newest transaction  to include in results')
 argparser.add_argument('--error', action='store_true', help='Only show transactions which have error state')
 argparser.add_argument('--no-final', action='store_true', dest='no_final', help='Omit finalized transactions')
 argparser.add_argument('--status-mask', type=str, dest='status_mask', action='append', default=[], help='Manually specify status bitmask value to match (overrides --error and --pending)')
 argparser.add_argument('--exact', action='store_true', help='Match status exact')
 argparser.add_argument('--include-pending', action='store_true', dest='include_pending', help='Include transactions in unprocessed state (pending)')
 argparser.add_argument('--renderer', type=str, default=[], action='append', help='Transaction renderer for output')
-#argparser.add_argument('--summary', action='store_true', help='output summary for each status category')
-#argparser.add_argument('-o', '--column', dest='column', action='append', type=str, help='add a column to display')
 argparser.add_positional('address', required=False, type=str, help='Ethereum address of recipient')
 args = argparser.parse_args()
 extra_args = {
@@ -48,16 +41,11 @@ extra_args = {
     'backend': None,
     'state_dir': None,
     'exact': None,
-#    'tx_digest_size': None,
-#    'start': None,
-#    'end': None,
     'error': None,
     'include_pending': '_PENDING',
     'status_mask': None,
     'no_final': None,
     'renderer': None,
-#    'column': None,
-#    'summary': None,
         }
 config = chainlib.cli.Config.from_args(args, arg_flags, extra_args=extra_args, base_config_dir=config_dir)
 config = chainqueue.cli.config.process_config(config, args, 0)
