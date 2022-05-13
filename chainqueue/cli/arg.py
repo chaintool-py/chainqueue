@@ -1,4 +1,8 @@
-def process_flags(argparser, flags):
-    argparser.add_argument('--backend', type=str, help='Backend to use for state store')
-    argparser.add_argument('--tx-digest-size', dest='tx_digest_size', type=str, help='Size of transaction hash in bytes')
-    argparser.add_argument('--state-dir', dest='state_dir', type=str, help='Directory to store queuer state in')
+def apply_flag(flag):
+    flag.add('queue')
+    return flag
+
+
+def apply_arg(arg): 
+    arg.add_long('tx-digest-size', 'queue', type=int, help='Size of transaction hash in bytes')
+    return arg

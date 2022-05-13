@@ -15,19 +15,14 @@ def process_queue_tx(settings, config):
     return settings
 
 
-def process_queue_backend(settings, config):
-    settings.set('QUEUE_BACKEND', config.get('QUEUE_BACKEND'))
-    return settings
-
-
 def process_queue_store(settings, config):
-    status = Status(settings.o['QUEUE_STORE_FACTORY'], allow_invalid=True)
-    settings.set('QUEUE_STATE_STORE'], status)
+    status = Status(settings.get('QUEUE_STORE_FACTORY'), allow_invalid=True)
+    settings.set('QUEUE_STATE_STORE', status)
     store = Store(
-        settings.o['CHAIN_SPEC'],
-        settings.o['QUEUE_STATE_STORE'],
-        settings.o['QUEUE_INDEX_STORE'],
-        settings.o['QUEUE_COUNTER_STORE'],
+        settings.get('CHAIN_SPEC'),
+        settings.get('QUEUE_STATE_STORE'),
+        settings.get('QUEUE_INDEX_STORE'),
+        settings.get('QUEUE_COUNTER_STORE'),
         sync=True,
         )
     settings.set('QUEUE_STORE', store)
@@ -37,15 +32,15 @@ def process_queue_store(settings, config):
 def process_queue_paths(settings, config):
     index_dir = config.get('QUEUE_INDEX_PATH')
     if index_dir == None:
-        index_dir = os.path.join(config.get('QUEUE_STATE_PATH'), 'tx')
+        index_dir = os.path.join(config.get('STATE_PATH'), 'tx')
 
     counter_dir = config.get('QUEUE_COUNTER_PATH')
     if counter_dir == None:
-        counter_dir = os.path.join(config.get('QUEUE_STATE_PATH'))
+        counter_dir = os.path.join(config.get('STATE_PATH'))
 
-    settings.set('QUEUE_STATE_PATH', config.get('QUEUE_STATE_PATH'))
+    settings.set('QUEUE_STATE_PATH', config.get('STATE_PATH'))
     settings.set('QUEUE_INDEX_PATH', index_dir)
-    settings.set('QUEUE_COUNTER_PATH'], counter_dir)
+    settings.set('QUEUE_COUNTER_PATH', counter_dir)
     return settings
 
 
