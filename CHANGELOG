@@ -1,3 +1,5 @@
+- 0.2.0
+	* Implement chainlib 0.3.0
 - 0.1.16
 	* Queue list cli tool
 	* State parser cli tool
