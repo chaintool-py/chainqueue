@@ -1,5 +1,5 @@
 hexathon~=0.1.7
 leveldir~=0.3.0
 confini~=0.6.1
-chainlib~=0.3.0
-shep~=0.2.9
+chainlib~=0.4.0
+shep~=0.3.0

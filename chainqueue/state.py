@@ -9,7 +9,7 @@ logg = logging.getLogger(__name__)
 
 class Verify:
 
-    def verify(self, state_store, from_state, to_state):
+    def verify(self, state_store, key, from_state, to_state):
         to_state_name = state_store.name(to_state)
         m = None
         try:  
