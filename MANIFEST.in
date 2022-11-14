@@ -1,1 +1,1 @@
-include *requirements.txt LICENSE chainqueue/db/migrations/default/* chainqueue/db/migrations/default/versions/* chainqueue/db/migrations/default/versions/src/* chainqueue/data/config/*
+include *requirements.txt LICENSE WAIVER WAIVER.asc CHANGELOG chainqueue/db/migrations/default/* chainqueue/db/migrations/default/versions/* chainqueue/db/migrations/default/versions/src/* chainqueue/data/config/*
